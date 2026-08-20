@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rang — Online Card Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══════════ LOBBY ══════════ -->
+<div id="screen-lobby" class="screen active">
+  <div class="lobby-wrap">
+    <div class="lobby-header">
+      <div class="logo">♠ Rang ♥</div>
+      <p class="logo-sub">4-player online card game</p>
+    </div>
+
+    <div id="panel-setup" class="lobby-panel">
+      <div class="field-row">
+        <label>Your name</label>
+        <input id="inp-name" type="text" maxlength="16" placeholder="Enter your name" autocomplete="off">
+      </div>
+      <button id="btn-create" class="btn btn-primary btn-full">Create New Room</button>
+      <div class="or-div">— or join an existing room —</div>
+      <div class="join-row">
+        <span class="code-prefix">RANG-</span>
+        <input id="inp-code" type="text" maxlength="4" placeholder="XXXX" autocomplete="off">
+        <button id="btn-join" class="btn btn-secondary">Join</button>
+      </div>
+      <div class="or-div">— developer —</div>
+      <button id="btn-trial" class="btn btn-ghost btn-full">🤖 Overview / Trial (with bots)</button>
+    </div>
+
+    <!-- Create mode picker: Select Seat vs Random Teams -->
+    <div id="panel-mode" class="lobby-panel hidden">
+      <p class="seat-hint">How should teams be decided?</p>
+      <button id="btn-mode-seat" class="btn btn-primary btn-full">🪑 Select Seat<br><small style="opacity:.8">Pick your own spot &amp; team</small></button>
+      <div style="height:10px"></div>
+      <button id="btn-mode-random" class="btn btn-secondary btn-full">🎴 Random Teams<br><small style="opacity:.8">Ace draw decides partners</small></button>
+      <div style="height:12px"></div>
+      <button id="btn-mode-back" class="btn btn-ghost btn-sm btn-full">← Back</button>
+    </div>
+
+    <!-- Random Teams: waiting for pool + ace draw + seat picker -->
+    <div id="panel-random" class="lobby-panel hidden">
+      <div class="room-code-box">
+        <span class="rc-lbl">Random Teams Room</span>
+        <span id="rand-code" class="rc-val">—</span>
+        <button id="btn-rand-copy" class="btn btn-ghost btn-sm">📋 Copy Link</button>
+      </div>
+
+      <div id="rand-waiting">
+        <p class="seat-hint">Waiting for players to join…<br><strong id="rand-pool-count" style="color:#e6c878">1/4</strong> joined</p>
+        <div id="rand-pool-list" class="lobby-status"></div>
+        <button id="btn-rand-start-early" class="btn btn-primary btn-full" style="margin-top:10px">▶ Start Playing (bots fill empty seats)</button>
+      </div>
+
+      <div id="rand-draw" class="hidden">
+        <p class="seat-hint">🎴 Ace Draw — first two aces become partners</p>
+        <div id="rand-draw-log" class="lobby-status" style="max-height:120px;overflow-y:auto"></div>
+        <div id="rand-teams" class="lobby-status" style="margin-top:8px"></div>
+      </div>
+
+      <div id="rand-seatpick" class="hidden">
+        <p class="seat-hint" id="rand-seat-hint">Pick your seat within your team</p>
+        <div class="seats-grid">
+          <div class="seat-tile teamA rand-seat-tile" data-num="1">
+            <div class="seat-lbl">P1 · Team A</div>
+            <div id="rsp-1" class="seat-name">Open</div>
+            <button class="btn-rand-seat" data-num="1">Take P1</button>
+          </div>
+          <div class="seat-tile teamB rand-seat-tile" data-num="2">
+            <div class="seat-lbl">P2 · Team B</div>
+            <div id="rsp-2" class="seat-name">Open</div>
+            <button class="btn-rand-seat" data-num="2">Take P2</button>
+          </div>
+          <div class="seat-tile teamA rand-seat-tile" data-num="3">
+            <div class="seat-lbl">P3 · Team A</div>
+            <div id="rsp-3" class="seat-name">Open</div>
+            <button class="btn-rand-seat" data-num="3">Take P3</button>
+          </div>
+          <div class="seat-tile teamB rand-seat-tile" data-num="4">
+            <div class="seat-lbl">P4 · Team B</div>
+            <div id="rsp-4" class="seat-name">Open</div>
+            <button class="btn-rand-seat" data-num="4">Take P4</button>
+          </div>
+        </div>
+        <div id="rand-seat-status" class="lobby-status">All four players pick a seat within their team.</div>
+      </div>
+
+      <div id="rand-startwrap" class="hidden">
+        <button id="btn-rand-start" class="btn btn-primary btn-full" disabled>▶ Start Playing</button>
+      </div>
+      <button id="btn-rand-back" class="btn btn-ghost btn-sm btn-full" style="margin-top:8px">← Back</button>
+    </div>
+
+    <div id="panel-trial" class="lobby-panel hidden">
+      <div class="room-code-box">
+        <span class="rc-lbl">Trial Room</span>
+        <span id="trial-code" class="rc-val">—</span>
+        <button id="btn-trial-copy" class="btn btn-ghost btn-sm">📋 Copy Link</button>
+      </div>
+      <p class="seat-hint">You are <strong style="color:#e6c878">P1 (Team A)</strong>. Seats P2, P3, P4 are bots.<br>Share the room code and anyone can replace a bot. Press start when ready.</p>
+      <button id="btn-start-trial" class="btn btn-primary btn-full">▶ Start Playing</button>
+      <button id="btn-trial-back" class="btn btn-ghost btn-sm btn-full">← Back</button>
+    </div>
+
+    <div id="panel-seats" class="lobby-panel hidden">
+      <div class="room-code-box">
+        <span class="rc-lbl">Room Code</span>
+        <span id="disp-code" class="rc-val">—</span>
+        <button id="btn-copy" class="btn btn-ghost btn-sm">📋 Copy Link</button>
+      </div>
+      <p class="seat-hint">Choose your seat · <strong style="color:#16a34a">Team A = P1 &amp; P3</strong> · <strong style="color:#ea580c">Team B = P2 &amp; P4</strong></p>
+      <div class="seats-grid">
+        <div class="seat-tile teamA" data-num="1">
+          <div class="seat-lbl">P1 · Team A</div>
+          <div id="sp-1" class="seat-name">Empty</div>
+          <button class="btn-seat" data-num="1">Take Seat</button>
+        </div>
+        <div class="seat-tile teamB" data-num="2">
+          <div class="seat-lbl">P2 · Team B</div>
+          <div id="sp-2" class="seat-name">Empty</div>
+          <button class="btn-seat" data-num="2">Take Seat</button>
+        </div>
+        <div class="seat-tile teamA" data-num="3">
+          <div class="seat-lbl">P3 · Team A</div>
+          <div id="sp-3" class="seat-name">Empty</div>
+          <button class="btn-seat" data-num="3">Take Seat</button>
+        </div>
+        <div class="seat-tile teamB" data-num="4">
+          <div class="seat-lbl">P4 · Team B</div>
+          <div id="sp-4" class="seat-name">Empty</div>
+          <button class="btn-seat" data-num="4">Take Seat</button>
+        </div>
+      </div>
+      <div id="lobby-status" class="lobby-status">Waiting for players…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ GAME ══════════ -->
+<div id="screen-game" class="screen hidden">
+
+  <div class="top-bar">
+    <span id="tb-room"   class="tb-pill">—</span>
+    <span id="tb-rang"   class="tb-pill rang-pill">Rang: —</span>
+    <span id="tb-trick"  class="tb-pill">Trick —</span>
+    <span id="tb-series" class="tb-pill">A:0 | B:0</span>
+    <button id="btn-mute" class="tb-mute">🔊</button>
+    <button id="btn-reset" class="tb-reset">↻ Reset</button>
+  </div>
+
+  <div class="game-table">
+
+    <!-- Partner at top -->
+    <div class="area-top">
+      <div id="pbox-top" class="pbox">
+        <div id="pav-top" class="pavatar">?</div>
+        <div id="pname-top"  class="pbox-name">—</div>
+        <div id="pmeta-top"  class="pbox-meta">—</div>
+        <div id="pcnt-top"   class="pbox-cnt">—</div>
+      </div>
+    </div>
+
+    <!-- Middle row -->
+    <div class="area-mid">
+
+      <!-- Left column: next player + challenge buttons -->
+      <div class="mid-left">
+        <div id="pbox-left" class="pbox">
+          <div id="pav-left" class="pavatar">?</div>
+          <div id="pname-left"  class="pbox-name">—</div>
+          <div id="pmeta-left"  class="pbox-meta">—</div>
+          <div id="pcnt-left"   class="pbox-cnt">—</div>
+        </div>
+        <div id="ch-panel" class="ch-panel">
+          <div class="ch-title">⚡</div>
+          <!-- CHALLENGE-INITIATING buttons (grouped + separated to avoid misclicks) -->
+          <div class="ch-group ch-group-challenge">
+            <button id="btn-5ch"    class="btn-ch five-ch   hidden">5-Card<br><small>Neechy Ajao</small></button>
+            <button id="btn-13ch"   class="btn-ch thirt-ch  hidden">13-Card<br><small>Challenge</small></button>
+          </div>
+          <!-- DECLINE / CONCEDE buttons (separate group, clearly apart) -->
+          <div class="ch-group ch-group-decline">
+            <button id="btn-no5ch"  class="btn-ch no-ch     hidden">No Challenge<br><small>5-card</small></button>
+            <button id="btn-no13ch" class="btn-ch no-ch     hidden">No Challenge<br><small>13-card</small></button>
+            <button id="btn-walkover"  class="btn-ch wo-btn    hidden">🏳 Walk Over<br><small>Concede hand</small></button>
+          </div>
+          <!-- WALK-OVER RESPONSE buttons (isolated, separated further) -->
+          <div class="ch-group ch-group-wo-response">
+            <button id="btn-wo-accept" class="btn-ch wo-accept hidden">✓ Accept<br><small>Walk over</small></button>
+            <button id="btn-wo-reject" class="btn-ch wo-reject hidden">✕ Reject<br><small>Play on</small></button>
+          </div>
+          <div id="ch-status" class="ch-status"></div>
+        </div>
+      </div>
+
+      <!-- Center: trick cards + scores -->
+      <div class="mid-center">
+        <div id="turn-lbl" class="turn-lbl">—</div>
+        <div id="winner-banner" class="winner-banner hidden">—</div>
+
+        <div class="trick-area">
+          <div class="trick-row">
+            <div id="ts-top" class="trick-slot"></div>
+          </div>
+          <div class="trick-row trick-mid">
+            <div id="ts-left"  class="trick-slot"></div>
+            <div class="trick-gap"></div>
+            <div id="ts-right" class="trick-slot"></div>
+          </div>
+          <div class="trick-row">
+            <div id="ts-bot" class="trick-slot"></div>
+          </div>
+        </div>
+
+        <div class="center-info">
+          <span id="pile-badge" class="info-badge">Pile: 0</span>
+          <span id="led-badge"  class="info-badge led-badge hidden">Led: —</span>
+        </div>
+
+        <div id="pile-display" class="pile-display"></div>
+
+        <div class="trick-scores">
+          <div class="ts-blk">
+            <div class="ts-team-lbl">Team A</div>
+            <div id="sc-a" class="ts-num">0</div>
+            <div class="ts-tot">/13</div>
+          </div>
+          <div class="ts-mid-lbl">tricks</div>
+          <div class="ts-blk">
+            <div class="ts-team-lbl">Team B</div>
+            <div id="sc-b" class="ts-num">0</div>
+            <div class="ts-tot">/13</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: previous player -->
+      <div class="mid-right">
+        <div id="pbox-right" class="pbox">
+          <div id="pav-right" class="pavatar">?</div>
+          <div id="pname-right"  class="pbox-name">—</div>
+          <div id="pmeta-right"  class="pbox-meta">—</div>
+          <div id="pcnt-right"   class="pbox-cnt">—</div>
+        </div>
+      </div>
+
+    </div><!-- end area-mid -->
+
+    <!-- Bottom: my cards -->
+    <div class="area-bottom">
+      <div id="pbox-bot" class="pbox pbox-me">
+        <div id="pname-bot"  class="pbox-name">—</div>
+        <div id="pmeta-bot"  class="pbox-meta">—</div>
+      </div>
+      <div id="my-hand" class="my-hand"></div>
+      <div class="action-bar">
+        <div id="my-hint" class="my-hint"></div>
+        <button id="btn-confirm" class="btn btn-confirm hidden">✓ Confirm Play</button>
+        <button id="btn-cancel"  class="btn btn-ghost   hidden">✕ Cancel</button>
+      </div>
+    </div>
+
+  </div><!-- end game-table -->
+</div><!-- end screen-game -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Dealer selection animation -->
+<div id="m-dealer" class="modal hidden">
+  <div class="mbox">
+    <h2>Finding the Dealer</h2>
+    <p>Dealing cards counter-clockwise until a Jack appears…</p>
+    <div id="dealer-log" class="dealer-log"></div>
+    <div id="dealer-result" class="dealer-result hidden"></div>
+    <button id="btn-dealer-ok" class="btn btn-primary hidden">Continue</button>
+  </div>
+</div>
+
+<!-- Take initial 5 cards (rang selector only) -->
+<div id="m-take" class="modal hidden">
+  <div class="mbox">
+    <h2>Take Your 5 Cards</h2>
+    <p>You are the Rang Selector. Take the top 5, or cut the deck first.</p>
+    <button id="btn-top5" class="btn btn-primary btn-full">Take Top 5 Cards</button>
+    <div class="cut-row">
+      <span>Cut at position:</span>
+      <input id="inp-cut" type="number" min="1" max="51" value="26">
+      <button id="btn-cut" class="btn btn-secondary">Cut &amp; Take 5</button>
+    </div>
+  </div>
+</div>
+
+<!-- Select rang suit -->
+<div id="m-rang" class="modal hidden">
+  <div class="mbox">
+    <h2>Select Rang (Trump Suit)</h2>
+    <p>Your 5 cards are shown below. Choose the trump suit for this hand:</p>
+    <div id="rang-hand" class="mhand"></div>
+    <div class="suit-grid">
+      <button class="btn-suit spade-btn"   data-suit="spades">♠<br>Hukam<br><small>Spades</small></button>
+      <button class="btn-suit heart-btn"   data-suit="hearts">♥<br>Dil<br><small>Hearts</small></button>
+      <button class="btn-suit diamond-btn" data-suit="diamonds">♦<br>Eent<br><small>Diamonds</small></button>
+      <button class="btn-suit club-btn"    data-suit="clubs">♣<br>Chiri<br><small>Clubs</small></button>
+    </div>
+  </div>
+</div>
+
+<!-- 5-card challenge: caller selects face-down card -->
+<div id="m-5ch" class="modal hidden">
+  <div class="mbox">
+    <h2>5-Card Challenge — Neechy Ajao</h2>
+    <p>Select one card to place face-down as the lead. Its suit becomes the led suit if challenge is accepted.</p>
+    <div id="fch-hand" class="mhand"></div>
+    <div class="mactions">
+      <button id="btn-fch-ok"     class="btn btn-confirm hidden">✓ Place Face Down</button>
+      <button id="btn-fch-cancel" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5-card challenge: rang team accept/reject -->
+<div id="m-5ar" class="modal hidden">
+  <div class="mbox">
+    <h2>⚡ 5-Card Challenge!</h2>
+    <p id="fcar-info">The opposing team placed a card face-down as a lead. Review your partner's hand then decide.</p>
+    <div id="fcar-pv" class="partner-view hidden">
+      <div class="pv-lbl" id="fcar-pv-lbl">Partner's cards:</div>
+      <div id="fcar-phand" class="mhand"></div>
+    </div>
+    <div id="fcar-votes" class="vote-status"></div>
+    <div class="mactions" id="fcar-btns">
+      <button id="btn-5-accept" class="btn btn-confirm">✓ Vote: Accept Challenge</button>
+      <button id="btn-5-reject" class="btn btn-danger">✕ Vote: Reject (+1 to them)</button>
+      <p class="vote-hint">Both teammates must cast the SAME vote. Change your vote until they match.</p>
+    </div>
+    <p class="mwait hidden" id="fcar-wait">Waiting for rang team to decide…</p>
+  </div>
+</div>
+
+<!-- 13-card challenge: caller selects new rang -->
+<div id="m-13ch" class="modal hidden">
+  <div class="mbox">
+    <h2>13-Card Challenge</h2>
+    <p>Declare a new Rang and challenge to win <strong>all 13 tricks</strong>. If opponents collect even one set, they get 5 points.</p>
+    <div class="suit-grid">
+      <button class="btn-suit suit-13 spade-btn"   data-suit="spades">♠<br>Hukam<br><small>Spades</small></button>
+      <button class="btn-suit suit-13 heart-btn"   data-suit="hearts">♥<br>Dil<br><small>Hearts</small></button>
+      <button class="btn-suit suit-13 diamond-btn" data-suit="diamonds">♦<br>Eent<br><small>Diamonds</small></button>
+      <button class="btn-suit suit-13 club-btn"    data-suit="clubs">♣<br>Chiri<br><small>Clubs</small></button>
+    </div>
+    <div class="mactions">
+      <button id="btn-13ch-cancel" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 13-card challenge: opposing team accept/reject -->
+<div id="m-13ar" class="modal hidden">
+  <div class="mbox">
+    <h2>⚡ 13-Card Challenge!</h2>
+    <p id="tcar-info">Your opponents declared a 13-card challenge!</p>
+    <div id="tcar-pv" class="partner-view hidden">
+      <div class="pv-lbl" id="tcar-pv-lbl">Partner's cards:</div>
+      <div id="tcar-phand" class="mhand"></div>
+    </div>
+    <div id="tcar-votes" class="vote-status"></div>
+    <div class="mactions" id="tcar-btns">
+      <button id="btn-13-accept" class="btn btn-confirm">✓ Vote: Accept Challenge</button>
+      <button id="btn-13-reject" class="btn btn-danger">✕ Vote: Reject (+1 to them)</button>
+      <p class="vote-hint">Both teammates must cast the SAME vote. Change your vote until they match.</p>
+    </div>
+    <p class="mwait hidden" id="tcar-wait">Waiting for opponents to decide…</p>
+  </div>
+</div>
+
+<!-- Hand result -->
+<div id="m-result" class="modal hidden">
+  <div class="mbox">
+    <h2 id="hr-title">Hand Over</h2>
+    <div id="hr-body" class="hr-body"></div>
+    <div id="hr-revoke" class="revoke-notice hidden"></div>
+    <div class="score-summary">
+      <div>Series score — <strong id="hr-score-a">A: 0</strong> vs <strong id="hr-score-b">B: 0</strong></div>
+      <div id="hr-next" style="font-size:12px;color:#86efac;margin-top:3px">Next dealer: — · Next selector: —</div>
+    </div>
+    <button id="btn-next-hand" class="btn btn-primary btn-full" style="padding:14px;font-size:15px;margin-top:4px">Start Next Round</button>
+  </div>
+</div>
+
+<!-- Series over -->
+<div id="m-series" class="modal hidden">
+  <div class="mbox series-mbox">
+    <div class="series-trophy">🏆</div>
+    <h2 id="series-title">Series Over!</h2>
+    <div id="series-body" class="series-body"></div>
+    <div id="series-votes" class="vote-status"></div>
+    <button id="btn-new-game" class="btn btn-primary btn-full">✓ Vote: Start New Series (all 4 must vote)</button>
+  </div>
+</div>
+
+<!-- Disconnect notice -->
+<div id="m-dc" class="modal hidden">
+  <div class="mbox">
+    <h2>⚠ Player Disconnected</h2>
+    <p id="dc-msg">Waiting up to 3 minutes for reconnection…</p>
+    <p id="dc-room" style="color:#e6c878;font-weight:600;margin-top:8px"></p>
+  </div>
+</div>
+
+<!-- Reset code modal -->
+<div id="m-reset" class="modal hidden">
+  <div class="mbox">
+    <h2>↻ Reset</h2>
+    <p><strong>Reset Hand</strong>: re-deals the current hand, scores kept.<br><strong>Reset Series</strong>: scores go 0:0 and a fresh dealer is found (Jack hunt).<br>Enter the reset code:</p>
+    <input id="inp-reset-code" type="password" placeholder="Reset code" autocomplete="off">
+    <div class="mactions">
+      <button id="btn-reset-ok" class="btn btn-danger">↻ Reset Hand (scores kept)</button>
+      <button id="btn-reset-series" class="btn" style="background:#7c2d12;color:#fff">⚠ Reset Whole Series (0:0)</button>
+      <div class="score-edit">
+        <div class="score-edit-lbl">Set series score (updates score only — hand unchanged):</div>
+        <div class="score-edit-row">
+          <label>Team A <input id="inp-score-a" type="number" min="0" max="99" placeholder="A"></label>
+          <label>Team B <input id="inp-score-b" type="number" min="0" max="99" placeholder="B"></label>
+          <button id="btn-set-score" class="btn" style="background:#1e3a2c;color:#e6c878;border:1px solid rgba(212,175,90,.4)">Set Scores</button>
+        </div>
+      </div>
+      <button id="btn-reset-cancel" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coat celebration overlay -->
+<div id="celebrate" class="celebrate hidden">
+  <div class="celebrate-inner">
+    <div class="celebrate-icon">🏅</div>
+    <div id="celebrate-text" class="celebrate-text">COAT!</div>
+    <div id="celebrate-sub" class="celebrate-sub"></div>
+  </div>
+</div>
+
+<!-- Goon Coat taunt overlay -->
+<div id="taunt" class="taunt hidden">
+  <div class="taunt-inner">
+    <div class="taunt-skull">💀</div>
+    <div id="taunt-text" class="taunt-text">GOON COAT!</div>
+    <div id="taunt-sub" class="taunt-sub"></div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

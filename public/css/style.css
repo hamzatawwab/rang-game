@@ -1,0 +1,1655 @@
+/* ── Reset & base ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f4c24; color: #fff; overflow: hidden; }
+button { cursor: pointer; font-family: inherit; }
+input { font-family: inherit; }
+
+/* ── Screens ────────────────────────────────────────────────────────────── */
+.screen { width: 100%; height: 100vh; overflow: hidden; }
+.screen.active { display: flex; }
+.screen.hidden { display: none; }
+#screen-lobby { align-items: center; justify-content: center; background: linear-gradient(135deg, #0f4c24 0%, #1a6b35 100%); overflow-y: auto; }
+#screen-game  { flex-direction: column; }
+
+/* ── Lobby ──────────────────────────────────────────────────────────────── */
+.lobby-wrap { width: 100%; max-width: 420px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.lobby-header { text-align: center; }
+.logo { font-size: 36px; font-weight: 700; color: #fde68a; letter-spacing: 4px; }
+.logo-sub { font-size: 13px; color: #86efac; margin-top: 4px; }
+
+.lobby-panel { background: rgba(0,0,0,0.45); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.lobby-panel.hidden { display: none; }
+
+.field-row { display: flex; flex-direction: column; gap: 5px; }
+.field-row label { font-size: 12px; color: #86efac; text-transform: uppercase; letter-spacing: 0.5px; }
+
+input[type="text"], input[type="number"] {
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #fff; width: 100%;
+  outline: none;
+}
+input[type="text"]::placeholder, input[type="number"]::placeholder { color: rgba(255,255,255,0.4); }
+input[type="text"]:focus, input[type="number"]:focus { border-color: #4ade80; }
+input[type="number"] { width: 64px; }
+
+.or-div { text-align: center; font-size: 12px; color: #9ca3af; }
+.join-row { display: flex; gap: 8px; }
+.join-row input { flex: 1; }
+
+/* Buttons */
+.btn { border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; transition: opacity 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.97); }
+.btn-full { width: 100%; }
+.btn-primary  { background: #16a34a; color: #fff; }
+.btn-secondary{ background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+.btn-ghost    { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+.btn-confirm  { background: #16a34a; color: #fff; }
+.btn-danger   { background: #dc2626; color: #fff; }
+.btn-sm       { padding: 6px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Seat grid */
+.room-code-box { background: rgba(74,222,128,0.12); border: 1px solid #4ade80; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rc-lbl { font-size: 11px; color: #86efac; text-transform: uppercase; letter-spacing: 0.5px; }
+.rc-val { font-size: 22px; font-weight: 700; color: #fde68a; letter-spacing: 3px; flex: 1; }
+
+.seat-hint { font-size: 12px; color: #d1d5db; text-align: center; }
+.seats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seat-tile { border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; gap: 6px; border: 2px solid transparent; }
+.seat-tile.teamA { background: rgba(22,163,74,0.18); border-color: rgba(22,163,74,0.4); }
+.seat-tile.teamB { background: rgba(234,88,12,0.18); border-color: rgba(234,88,12,0.4); }
+.seat-tile.mine  { border-width: 2px; border-color: #fde68a; }
+.seat-lbl  { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; }
+.seat-name { font-size: 14px; font-weight: 600; color: #fff; min-height: 20px; }
+.btn-seat  { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 10px; }
+.btn-seat:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-seat.mine-btn { background: rgba(253,230,138,0.2); border-color: #fde68a; color: #fde68a; }
+
+.lobby-status { text-align: center; font-size: 13px; color: #86efac; padding: 6px; }
+
+/* ── Top bar ────────────────────────────────────────────────────────────── */
+.top-bar { display: flex; gap: 5px; padding: 5px 6px; background: rgba(0,0,0,0.4); flex-wrap: wrap; flex-shrink: 0; }
+.tb-pill { font-size: 11px; background: rgba(255,255,255,0.1); border-radius: 5px; padding: 3px 8px; color: #fde68a; white-space: nowrap; }
+.rang-pill { background: rgba(124,58,237,0.35); border: 1px solid #a78bfa; color: #ddd6fe; }
+
+/* ── Game table ─────────────────────────────────────────────────────────── */
+.game-table { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 4px; background: #1a6b35; overflow: hidden; }
+.area-bottom { margin-top: auto; }
+.area-top    { display: flex; justify-content: center; }
+.area-mid    { display: grid; grid-template-columns: 100px 1fr 90px; gap: 4px; flex: 0 0 auto; min-height: 0; justify-content: center; }
+.area-bottom { display: flex; flex-direction: column; gap: 3px; }
+
+/* Player boxes */
+.pbox { background: rgba(0,0,0,0.38); border-radius: 9px; padding: 7px 9px; text-align: center; border: 2px solid transparent; }
+.pbox.active  { border-color: #4ade80; }
+.pbox.pbox-me { border-color: #60a5fa; }
+.pbox-name { font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; margin: 0 auto; }
+.pbox-meta { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+.pbox-meta.teamA { color: #86efac; }
+.pbox-meta.teamB { color: #fb923c; }
+.pbox-cnt  { font-size: 10px; color: #6b7280; margin-top: 1px; }
+.ptag      { font-size: 9px; color: #fde68a; background: rgba(253,230,138,0.12); border-radius: 3px; padding: 1px 4px; display: inline-block; margin-top: 2px; }
+.pbox.disconnected { opacity: 0.5; border-color: #dc2626; }
+
+/* ── Mid columns ────────────────────────────────────────────────────────── */
+.mid-left  { display: flex; flex-direction: column; gap: 5px; }
+.mid-center{ display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.mid-right { display: flex; flex-direction: column; align-items: center; }
+
+/* ── Challenge panel ────────────────────────────────────────────────────── */
+.ch-panel  { background: rgba(0,0,0,0.3); border-radius: 9px; padding: 7px 5px; display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
+.ch-title  { font-size: 11px; color: #fde68a; text-align: center; font-weight: 600; }
+.btn-ch    { border: none; border-radius: 7px; padding: 7px 5px; font-size: 10px; font-weight: 600; line-height: 1.3; text-align: center; width: 100%; }
+.btn-ch.hidden { display: none; }
+.five-ch   { background: #7c3aed; color: #fff; }
+.thirt-ch  { background: #1d4ed8; color: #fff; }
+.deal-btn  { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+.play-btn  { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+.ch-status { font-size: 9px; color: #9ca3af; text-align: center; min-height: 14px; line-height: 1.3; }
+
+/* ── Turn label ─────────────────────────────────────────────────────────── */
+.turn-lbl { font-size: 11px; color: #fde68a; font-weight: 600; text-align: center; min-height: 16px; }
+
+/* ── Trick area ─────────────────────────────────────────────────────────── */
+.trick-area { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+.trick-row  { display: flex; justify-content: center; align-items: center; }
+.trick-mid  { gap: 4px; }
+.trick-gap  { width: 44px; }
+
+.trick-slot { width: 44px; height: 62px; }
+.trick-slot:empty::after { content: ''; display: block; width: 100%; height: 100%; border-radius: 6px; border: 2px dashed rgba(255,255,255,0.15); }
+
+/* ── Playing cards ──────────────────────────────────────────────────────── */
+.card {
+  background: #fff;
+  border-radius: 6px;
+  border: 1.5px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3px 4px;
+  position: relative;
+  width: 44px;
+  height: 62px;
+  user-select: none;
+  transition: transform 0.12s, border-color 0.12s;
+}
+.card.red  .cr, .card.red  .cs { color: #dc2626; }
+.card.black .cr, .card.black .cs { color: #111827; }
+.card .ctop { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+.card .cr   { font-size: 13px; font-weight: 800; }
+.card .cs   { font-size: 12px; }
+.card .cbot { position: absolute; bottom: 3px; left: 3px; font-size: 8px; color: #6b7280; font-style: italic; max-width: 36px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card .cbot-flip { position: absolute; bottom: 3px; right: 3px; transform: rotate(180deg); opacity: 0.45; font-size: 10px; font-weight: 800; display: flex; flex-direction: column; align-items: flex-start; }
+.card.led-card { border: 2px solid #fbbf24; }
+.card.downgraded { border: 2px dashed #f59e0b; }
+.led-tag { position: absolute; top: 1px; right: 2px; font-size: 7px; background: #fbbf24; color: #78350f; border-radius: 2px; padding: 0 3px; font-weight: 700; }
+
+/* Hand cards (mine) */
+.hand-card {
+  background: #fff;
+  border-radius: 7px;
+  border: 2px solid transparent;
+  width: 40px; height: 60px;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 3px 4px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, opacity 0.12s;
+  flex-shrink: 0;
+}
+.hand-card .cr { font-size: 13px; font-weight: 800; line-height: 1; }
+.hand-card .cs { font-size: 12px; line-height: 1; }
+.hand-card .cbot { position: absolute; bottom: 3px; left: 3px; font-size: 8px; color: #6b7280; font-style: italic; }
+.hand-card.red   .cr, .hand-card.red   .cs { color: #dc2626; }
+.hand-card.black .cr, .hand-card.black .cs { color: #111827; }
+.hand-card:hover:not(.disabled) { transform: translateY(-6px); }
+.hand-card.selected { border-color: #4ade80 !important; transform: translateY(-9px); box-shadow: 0 0 0 2px rgba(74,222,128,0.4); }
+.hand-card.disabled { opacity: 0.3; cursor: not-allowed; }
+.hand-card.rang-card { border-color: rgba(167,139,250,0.5); }
+
+/* ── Center info ────────────────────────────────────────────────────────── */
+.center-info { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.info-badge  { font-size: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; padding: 3px 8px; color: #fff; }
+.led-badge   { background: rgba(251,191,36,0.25); border: 1px solid #fbbf24; color: #fde68a; }
+.info-badge.hidden { display: none; }
+
+/* ── Trick scores ───────────────────────────────────────────────────────── */
+.trick-scores { display: flex; align-items: center; gap: 8px; }
+.ts-blk       { text-align: center; }
+.ts-team-lbl  { font-size: 9px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; }
+.ts-num       { font-size: 18px; font-weight: 700; color: #fff; line-height: 1; }
+.ts-tot       { font-size: 9px; color: #6b7280; }
+.ts-mid-lbl   { font-size: 10px; color: #6b7280; }
+
+/* ── My hand ────────────────────────────────────────────────────────────── */
+.my-hand { display: flex; gap: 4px; justify-content: center; flex-wrap: nowrap; overflow-x: auto; padding: 2px 4px 2px; scrollbar-width: none; }
+.my-hand::-webkit-scrollbar { display: none; }
+
+.action-bar { display: flex; align-items: center; gap: 6px; justify-content: center; flex-wrap: wrap; padding: 2px 4px; }
+.my-hint    { font-size: 10px; color: #86efac; text-align: center; width: 100%; }
+
+/* ── Modals ─────────────────────────────────────────────────────────────── */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 12px; }
+.modal.hidden { display: none; }
+.mbox { background: #1c3a2a; border: 1px solid rgba(74,222,128,0.3); border-radius: 14px; padding: 20px; max-width: 380px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.mbox h2 { font-size: 18px; color: #fde68a; }
+.mbox p  { font-size: 13px; color: #d1d5db; line-height: 1.5; }
+
+.mhand { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; padding: 6px 0; }
+.mhand .hand-card { width: 44px; height: 64px; }
+
+.suit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-suit  { border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 12px 6px; font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.1s, border-color 0.1s; text-align: center; line-height: 1.4; }
+.btn-suit small { font-size: 11px; font-weight: 400; display: block; }
+.btn-suit:active { transform: scale(0.96); }
+.spade-btn   { background: rgba(30,41,59,0.8);   color: #fff; }
+.heart-btn   { background: rgba(127,29,29,0.6);   color: #fca5a5; }
+.diamond-btn { background: rgba(127,29,29,0.6);   color: #fca5a5; }
+.club-btn    { background: rgba(30,41,59,0.8);   color: #fff; }
+.btn-suit:hover { border-color: #fde68a; }
+
+.cut-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #d1d5db; }
+
+.mactions { display: flex; flex-direction: column; gap: 8px; }
+.mwait    { font-size: 13px; color: #9ca3af; text-align: center; }
+
+.partner-view { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.partner-view.hidden { display: none; }
+.pv-lbl   { font-size: 12px; color: #86efac; font-weight: 600; }
+
+/* Dealer log */
+.dealer-log    { max-height: 180px; overflow-y: auto; font-size: 12px; color: #d1d5db; display: flex; flex-direction: column; gap: 3px; }
+.dealer-log-entry { padding: 2px 0; }
+.dealer-result { font-size: 15px; color: #fde68a; font-weight: 600; text-align: center; padding: 8px; background: rgba(253,230,138,0.1); border-radius: 8px; }
+
+/* Hand result */
+.hr-body       { font-size: 14px; color: #d1d5db; display: flex; flex-direction: column; gap: 6px; }
+.hr-result-type{ font-size: 20px; font-weight: 700; text-align: center; padding: 10px; border-radius: 8px; }
+.score-summary { font-size: 13px; color: #9ca3af; text-align: center; display: flex; flex-direction: column; gap: 3px; }
+.revoke-notice { background: rgba(220,38,38,0.2); border: 1px solid #dc2626; border-radius: 8px; padding: 10px; font-size: 12px; color: #fca5a5; }
+
+/* Series over */
+.series-mbox { text-align: center; }
+.series-trophy { font-size: 48px; }
+.series-body   { font-size: 15px; color: #d1d5db; display: flex; flex-direction: column; gap: 6px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: #fff; border: 1px solid #374151; border-radius: 8px; padding: 10px 20px; font-size: 13px; z-index: 200; max-width: 300px; text-align: center; }
+.toast.hidden { display: none; }
+.toast.error { border-color: #dc2626; background: #3b1111; color: #fca5a5; }
+
+/* Highlight effects */
+.trick-slot.winning-slot .card { border-color: #fde68a; box-shadow: 0 0 8px rgba(253,230,138,0.5); }
+.pbox.just-won { border-color: #fde68a; }
+
+/* ── Responsive: desktop sizes only (mobile handled in v3 block below) ──── */
+@media (min-width: 701px) {
+  .hand-card { width: 46px; height: 66px; }
+  .trick-slot { width: 50px; height: 70px; }
+  .card { width: 50px; height: 70px; }
+  .card .cr { font-size: 15px; }
+  .trick-gap { width: 52px; }
+  .area-mid { grid-template-columns: 115px 1fr 105px; }
+}
+
+
+/* ── v2 additions ───────────────────────────────────────────────────────── */
+
+/* Reset button in top bar */
+.tb-reset { background: rgba(220,38,38,0.35); border: 1px solid #dc2626; border-radius: 5px;
+  color: #fca5a5; font-size: 11px; padding: 3px 9px; margin-left: auto; font-weight: 600; }
+.tb-reset:active { transform: scale(0.95); }
+
+/* No Challenge buttons */
+.btn-ch.no-ch { background: rgba(255,255,255,0.14); color: #d1d5db; border: 1px solid rgba(255,255,255,0.3); }
+.btn-ch.declined { background: rgba(74,222,128,0.15); border: 1px solid #4ade80; color: #86efac; cursor: default; }
+
+/* Winner announcement banner */
+.winner-banner { background: rgba(253,230,138,0.95); color: #78350f; font-size: 14px; font-weight: 700;
+  border-radius: 8px; padding: 7px 16px; text-align: center; animation: bannerPop 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4); z-index: 5; }
+.winner-banner.hidden { display: none; }
+@keyframes bannerPop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Uncollected pile display: each trick = compact group of 4 mini cards */
+.pile-display { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; max-width: 100%;
+  max-height: 108px; overflow-y: auto; padding: 2px; }
+.pile-trick { display: flex; gap: 1px; background: rgba(0,0,0,0.28); border-radius: 5px; padding: 2px 3px;
+  align-items: center; }
+.pile-trick .pt-num { font-size: 8px; color: #9ca3af; margin-right: 2px; writing-mode: vertical-lr;
+  text-orientation: mixed; }
+.mini-card { background: #fff; border-radius: 3px; width: 19px; height: 27px; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.mini-card .mr { font-size: 9px; font-weight: 800; }
+.mini-card .ms { font-size: 8px; }
+.mini-card.red .mr, .mini-card.red .ms { color: #dc2626; }
+.mini-card.black .mr, .mini-card.black .ms { color: #111827; }
+
+/* Live trick counter emphasis */
+.trick-scores { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px 10px; }
+
+/* Reset code input */
+#inp-reset-code { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #fff; width: 100%; outline: none; }
+
+/* ══ MOBILE LAYOUT v3: compact, centered, no edge-hugging ══════════════════ */
+@media (max-width: 700px) {
+
+  /* Overall page can scroll if needed; use dynamic viewport for Safari bars */
+  #screen-game { height: 100dvh; }
+
+  .game-table { padding: 4px; gap: 4px; display: flex; flex-direction: column; }
+
+  /* The middle grid becomes a tight 3-column layout that hugs the CENTER */
+  .area-mid {
+    display: grid;
+    grid-template-columns: minmax(72px, 88px) 1fr minmax(64px, 80px);
+    gap: 4px;
+    align-items: start;
+    justify-content: center;
+    flex: 0 0 auto;          /* do not stretch — kill the dead space */
+  }
+
+  .mid-left  { gap: 4px; }
+  .mid-center{ gap: 4px; }
+
+  /* Player boxes compact */
+  .pbox { padding: 5px 4px; border-radius: 8px; }
+  .pbox-name { font-size: 11px; max-width: 78px; }
+  .pbox-meta { font-size: 9px; }
+  .pbox-cnt  { font-size: 9px; }
+
+  /* Challenge panel compact, directly under left player box */
+  .ch-panel { padding: 5px 4px; gap: 4px; border-radius: 8px; }
+  .ch-title { font-size: 10px; }
+  .btn-ch   { padding: 6px 3px; font-size: 9px; border-radius: 6px; }
+  .ch-status{ font-size: 8px; min-height: 10px; }
+
+  /* Trick area compact */
+  .trick-slot { width: 40px; height: 56px; }
+  .card       { width: 40px; height: 56px; border-radius: 5px; }
+  .card .cr   { font-size: 12px; }
+  .card .cs   { font-size: 11px; }
+  .trick-gap  { width: 38px; }
+  .turn-lbl   { font-size: 10px; min-height: 13px; }
+  .winner-banner { font-size: 11px; padding: 4px 10px; }
+
+  /* Pile mini-cards */
+  .pile-display { max-height: 60px; gap: 3px; }
+  .mini-card { width: 15px; height: 22px; }
+  .mini-card .mr { font-size: 7px; }
+  .mini-card .ms { font-size: 6px; }
+  .pile-trick { padding: 1px 2px; }
+  .pile-trick .pt-num { font-size: 7px; }
+
+  /* Counters */
+  .trick-scores { padding: 3px 10px; gap: 6px; }
+  .ts-num { font-size: 15px; }
+  .ts-team-lbl { font-size: 8px; }
+  .ts-tot { font-size: 8px; }
+  .info-badge { font-size: 9px; padding: 2px 7px; }
+
+  /* ── Bottom area: pinned low but ABOVE the browser bar ── */
+  .area-bottom {
+    margin-top: auto;               /* pushes it to the bottom of remaining space */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+  }
+  .pbox-me { padding: 4px 8px; }
+
+  /* Hand: single row, scrollable, cards slightly overlapped to fit more */
+  .my-hand {
+    gap: 3px;
+    padding: 6px 6px 2px;
+    justify-content: flex-start;    /* left-align so scroll direction is obvious */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .my-hand::after { content: ''; flex: 0 0 4px; }  /* end spacer */
+  .hand-card { width: 38px; height: 56px; }
+  .hand-card .cr { font-size: 12px; }
+  .hand-card .cs { font-size: 11px; }
+  .hand-card .cbot { font-size: 7px; max-width: 32px; }
+
+  .action-bar { padding: 2px 4px 4px; }
+  .btn { padding: 9px 16px; font-size: 13px; }
+  .my-hint { font-size: 9px; }
+
+  /* Top bar compact */
+  .top-bar { padding: 4px 5px; gap: 4px; }
+  .tb-pill { font-size: 10px; padding: 2px 6px; }
+  .tb-reset { font-size: 10px; padding: 2px 7px; }
+}
+
+/* Very narrow phones */
+@media (max-width: 380px) {
+  .area-mid { grid-template-columns: minmax(64px, 76px) 1fr minmax(58px, 70px); }
+  .trick-slot { width: 36px; height: 50px; }
+  .card { width: 36px; height: 50px; }
+  .trick-gap { width: 34px; }
+  .hand-card { width: 34px; height: 50px; }
+}
+
+/* ── Walk over buttons ─────────────────────────────────────────────────── */
+.btn-ch.wo-btn    { background: rgba(234,88,12,0.75); color: #fff; }
+.btn-ch.wo-accept { background: #16a34a; color: #fff; }
+.btn-ch.wo-reject { background: rgba(220,38,38,0.8); color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VISUAL RESKIN v4 — dark charcoal theme inspired by pro card apps
+   (English only · Team A/B · all layout & rules untouched)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html, body { background: #1d2426; }
+#screen-lobby { background: linear-gradient(160deg, #1d2426 0%, #263133 100%); }
+.game-table { background: #222b2d; }
+.top-bar { background: rgba(0,0,0,0.5); }
+
+/* ── The center "mat" — dark rug style ── */
+.trick-area {
+  background: linear-gradient(180deg, #2b1f14 0%, #241a11 100%);
+  border: 2px solid #4a3722;
+  border-radius: 12px;
+  padding: 12px 8px;
+  box-shadow: inset 0 0 24px rgba(0,0,0,0.5), 0 3px 10px rgba(0,0,0,0.4);
+  position: relative;
+}
+.trick-area::before {
+  content: '';
+  position: absolute; top: 4px; left: 8px; right: 8px; height: 4px;
+  background: repeating-linear-gradient(90deg, #8a6a3b 0 6px, transparent 6px 12px);
+  border-radius: 2px; opacity: 0.5;
+}
+.trick-area::after {
+  content: '';
+  position: absolute; bottom: 4px; left: 8px; right: 8px; height: 4px;
+  background: repeating-linear-gradient(90deg, #8a6a3b 0 6px, transparent 6px 12px);
+  border-radius: 2px; opacity: 0.5;
+}
+
+/* ── Cards: crisp white with real shadows ── */
+.card, .hand-card, .mini-card {
+  background: linear-gradient(160deg, #ffffff 0%, #f4f4f2 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(0,0,0,0.15);
+  border: none;
+  border-radius: 7px;
+}
+.card .cr, .hand-card .cr { font-weight: 800; }
+.card.led-card { box-shadow: 0 0 0 2px #fbbf24, 0 2px 8px rgba(0,0,0,0.5); }
+.hand-card.selected { box-shadow: 0 0 0 2.5px #4ade80, 0 6px 14px rgba(0,0,0,0.5); }
+.hand-card.disabled { opacity: 0.32; }
+.hand-card.rang-card { box-shadow: 0 0 0 1.5px rgba(167,139,250,0.7), 0 2px 6px rgba(0,0,0,0.45); }
+
+/* ── Fanned hand ── */
+.my-hand {
+  justify-content: center !important;
+  padding: 14px 8px 6px !important;
+  overflow: visible !important;
+  min-height: 74px;
+}
+.my-hand .hand-card { margin-left: -14px; transition: transform 0.15s; }
+.my-hand .hand-card:first-child { margin-left: 0; }
+
+/* ── Player badges with avatars ── */
+.pbox {
+  background: rgba(12,16,17,0.85);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  padding-top: 6px;
+}
+.pavatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  margin: 0 auto 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff;
+  background: #475569;
+  border: 2px solid #64748b;
+}
+.pavatar.teamA { background: #14532d; border-color: #4ade80; color: #bbf7d0; }
+.pavatar.teamB { background: #7c2d12; border-color: #fb923c; color: #fed7aa; }
+.pbox.active { border-color: #4ade80; box-shadow: 0 0 0 2px rgba(74,222,128,0.4), 0 2px 8px rgba(0,0,0,0.4); }
+.pbox.pbox-me { background: rgba(12,16,17,0.85); }
+
+/* Challenge panel matches badges */
+.ch-panel { background: rgba(12,16,17,0.75); border-radius: 12px; }
+
+/* ── Top bar pills refined ── */
+.tb-pill { background: rgba(255,255,255,0.08); border: 0.5px solid rgba(255,255,255,0.12); }
+.tb-mute { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 5px; font-size: 12px; padding: 2px 8px; cursor: pointer; }
+
+/* ── Join row code prefix ── */
+.join-row { align-items: center; }
+.code-prefix {
+  background: rgba(253,230,138,0.15); border: 1px solid rgba(253,230,138,0.4);
+  border-radius: 8px 0 0 8px; padding: 10px 10px;
+  font-size: 15px; font-weight: 700; color: #fde68a; letter-spacing: 1px;
+}
+.join-row input { border-radius: 0 8px 8px 0 !important; letter-spacing: 3px; font-weight: 700;
+  text-transform: uppercase; }
+
+/* ── Vote status box ── */
+.vote-status { background: rgba(0,0,0,0.35); border-radius: 8px; padding: 8px 12px;
+  font-size: 13px; color: #d1d5db; display: flex; flex-direction: column; gap: 3px; }
+.vote-status:empty { display: none; }
+.vote-hint { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 2px; }
+
+/* ── Confetti ── */
+.confetti-bit {
+  position: fixed; top: -12px; z-index: 500; pointer-events: none;
+  border-radius: 2px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(108vh) rotate(680deg); opacity: 0.2; }
+}
+
+/* ── Goon Coat taunt ── */
+.taunt {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(60,0,0,0.82);
+  display: flex; align-items: center; justify-content: center;
+  animation: tauntFlash 0.4s ease;
+}
+.taunt.hidden { display: none; }
+.taunt-inner { text-align: center; animation: tauntShake 0.5s ease infinite; }
+.taunt-skull { font-size: 64px; }
+.taunt-text { font-size: 38px; font-weight: 900; color: #f87171; letter-spacing: 3px;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.8); }
+.taunt-sub { font-size: 15px; color: #fecaca; margin-top: 6px; }
+@keyframes tauntShake {
+  0%,100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-6px) rotate(-1.5deg); }
+  75% { transform: translateX(6px) rotate(1.5deg); }
+}
+@keyframes tauntFlash { from { background: rgba(255,0,0,0.5); } to { background: rgba(60,0,0,0.82); } }
+
+/* ── Mobile refinements for the reskin ── */
+@media (max-width: 700px) {
+  .pavatar { width: 24px; height: 24px; font-size: 11px; }
+  .my-hand .hand-card { margin-left: -12px; }
+  .taunt-text { font-size: 26px; }
+  .taunt-skull { font-size: 44px; }
+  .trick-area { padding: 10px 6px; }
+  .code-prefix { padding: 10px 8px; font-size: 14px; }
+}
+
+
+/* ── v5 tweaks ─────────────────────────────────────────────────────────── */
+
+/* Cut button in Claude terracotta */
+#btn-cut { background: #D97757 !important; color: #fff !important; border: none !important; }
+
+/* Bigger suit symbols — clearer Chiri vs Hukam */
+.card .cs { font-size: 16px !important; }
+.hand-card .cs { font-size: 16px !important; }
+.card .cbot-flip span:last-child { font-size: 13px; }
+
+/* Face card glyphs (K ♚ / Q ♛ / J ♞) */
+.face-glyph {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -46%);
+  font-size: 22px; line-height: 1; opacity: 0.85;
+  pointer-events: none;
+}
+.card.red .face-glyph, .hand-card.red .face-glyph { color: #dc2626; }
+.card.black .face-glyph, .hand-card.black .face-glyph { color: #111827; }
+
+/* Uncollected pile mini-cards +10% */
+.mini-card { width: 21px; height: 30px; }
+.mini-card .mr { font-size: 10px; }
+.mini-card .ms { font-size: 9px; }
+
+@media (max-width: 700px) {
+  .card .cs { font-size: 14px !important; }
+  .hand-card .cs { font-size: 14px !important; }
+  .face-glyph { font-size: 17px; }
+  .mini-card { width: 18px; height: 26px; }
+  .mini-card .mr { font-size: 9px; }
+  .mini-card .ms { font-size: 8px; }
+}
+
+/* ── v6: blur, fireworks, coat celebration ─────────────────────────────── */
+
+
+/* Stronger modal backdrop */
+.modal { background: rgba(0,0,0,0.85); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
+
+/* Fireworks particles */
+.fw-p {
+  position: fixed; width: 7px; height: 7px; border-radius: 50%;
+  z-index: 450; pointer-events: none;
+  animation: fwFly 1.15s ease-out forwards;
+  box-shadow: 0 0 6px currentColor;
+}
+@keyframes fwFly {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  70%  { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
+}
+
+/* Coat celebration overlay (gold) */
+.celebrate {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(66,45,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+  animation: celebFlash 0.4s ease;
+}
+.celebrate.hidden { display: none; }
+.celebrate-inner { text-align: center; animation: celebPulse 0.9s ease infinite; }
+.celebrate-icon { font-size: 60px; }
+.celebrate-text { font-size: 40px; font-weight: 900; color: #fde047; letter-spacing: 4px;
+  text-shadow: 0 0 22px rgba(253,224,71,0.8), 0 3px 10px rgba(0,0,0,0.7); }
+.celebrate-sub { font-size: 15px; color: #fef3c7; margin-top: 6px; }
+@keyframes celebPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes celebFlash { from { background: rgba(253,224,71,0.5); } to { background: rgba(66,45,0,0.78); } }
+
+/* Goon coat: more dramatic — screen-wide shake and pulsing red */
+.taunt { animation: tauntFlash 0.35s ease, tauntBgPulse 0.8s ease infinite 0.4s; }
+@keyframes tauntBgPulse {
+  0%,100% { background: rgba(60,0,0,0.82); }
+  50%     { background: rgba(110,0,0,0.88); }
+}
+.taunt-skull { font-size: 76px; animation: skullSpin 1.1s ease infinite; }
+@keyframes skullSpin { 0%,100% { transform: rotate(-12deg) scale(1); } 50% { transform: rotate(12deg) scale(1.18); } }
+
+@media (max-width: 700px) {
+  .celebrate-text { font-size: 28px; }
+  .celebrate-icon { font-size: 46px; }
+  .taunt-skull { font-size: 54px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAJLIS RESKIN v7 — Luxury Middle Eastern, ornate gold + emerald + parchment
+   English only · Team A/B · all layout & rules untouched
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html, body { background: #0c0a08 !important; font-family: 'Jost', sans-serif !important; }
+#screen-lobby { background: radial-gradient(ellipse at 50% 25%, #14342a 0%, #0d241c 45%, #0a1712 100%) !important; }
+.game-table { background: radial-gradient(ellipse at 50% 30%, #14342a 0%, #0d241c 50%, #0a1712 100%) !important; position: relative; }
+.game-table::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:50px;
+  background-image: repeating-linear-gradient(90deg, transparent 0 8px, rgba(212,175,90,0.12) 8px 9px, transparent 9px 20px);
+  opacity:0.5; pointer-events:none; z-index:0;
+}
+
+/* Top bar — ornate */
+.top-bar { background: linear-gradient(180deg, rgba(20,15,8,0.92), rgba(12,9,5,0.85)) !important; border-bottom: 1px solid rgba(212,175,90,0.3); }
+.tb-pill { background: rgba(212,175,90,0.08) !important; border: 1px solid rgba(212,175,90,0.25) !important; color: #e0d4b0 !important; font-family:'Jost'; }
+.tb-pill.rang-pill { background: linear-gradient(180deg,#1e3a2c,#12241a) !important; border-color: rgba(212,175,90,0.5) !important; color:#e6c878 !important; font-family:'Cormorant Garamond'; font-weight:600; font-size:13px; }
+.tb-reset { background: rgba(168,48,40,0.35) !important; border:1px solid rgba(212,175,90,0.4) !important; color:#e6c878 !important; }
+.tb-mute { background: rgba(212,175,90,0.1) !important; border:1px solid rgba(212,175,90,0.3) !important; color:#e6c878 !important; }
+
+/* Center trick mat — Majlis rug */
+.trick-area {
+  background: linear-gradient(135deg, rgba(30,20,10,0.55), rgba(18,12,6,0.45)) !important;
+  border: 1px solid rgba(212,175,90,0.3) !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 0 34px rgba(0,0,0,0.55), 0 3px 14px rgba(0,0,0,0.5) !important;
+  position: relative;
+}
+.trick-area::before, .trick-area::after {
+  background: repeating-linear-gradient(90deg, #b8923e 0 6px, transparent 6px 12px) !important;
+  opacity:0.45 !important;
+}
+
+/* Cards — parchment with gold-brown edge */
+.card, .hand-card, .mini-card {
+  background: linear-gradient(160deg, #fdf6e3 0%, #efe4c8 100%) !important;
+  box-shadow: 0 5px 16px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(120,90,40,0.25) !important;
+  border: none !important;
+}
+.card .cr, .hand-card .cr { font-family:'Cormorant Garamond' !important; font-weight:700 !important; }
+.card.red .cr, .card.red .cs, .hand-card.red .cr, .hand-card.red .cs { color:#a83028 !important; }
+.card.black .cr, .card.black .cs, .hand-card.black .cr, .hand-card.black .cs { color:#1a1410 !important; }
+.card.led-card { box-shadow: 0 0 0 2px #e6c878, 0 6px 18px rgba(0,0,0,0.5) !important; }
+.hand-card.selected { box-shadow: 0 0 26px rgba(212,175,90,0.75), 0 8px 20px rgba(0,0,0,0.5) !important; border:1.5px solid #e6c878 !important; }
+.hand-card.rang-card { box-shadow: 0 0 0 1.5px rgba(212,175,90,0.6), 0 4px 12px rgba(0,0,0,0.45) !important; }
+
+/* BIGGER suit symbols — clear Chiri vs Hukam (user request) */
+.card .cs { font-size: 20px !important; line-height:1 !important; }
+.hand-card .cs { font-size: 20px !important; line-height:1 !important; }
+.face-glyph { font-size: 24px !important; }
+
+/* Player badges — Majlis medallion avatars, name inside is SMALL & clean */
+.pbox { background: rgba(20,15,8,0.85) !important; border-radius: 10px !important; box-shadow: 0 3px 12px rgba(0,0,0,0.45); border:1px solid rgba(212,175,90,0.2); }
+.pbox.active { border-color: rgba(212,175,90,0.7) !important; box-shadow: 0 0 0 1px rgba(212,175,90,0.5), 0 0 16px rgba(212,175,90,0.3) !important; }
+.pavatar {
+  width: 34px !important; height: 34px !important; border-radius: 50% !important;
+  font-family:'Cormorant Garamond' !important; font-size: 15px !important; font-weight:700 !important;
+  background: radial-gradient(circle at 35% 30%, #e6c878, #b8923e) !important;
+  color: #0c0a08 !important; border: 2px solid #f0d68a !important;
+  box-shadow: 0 0 14px rgba(212,175,90,0.4), 0 3px 10px rgba(0,0,0,0.5) !important;
+  position: relative;
+}
+.pavatar::after { content:''; position:absolute; inset:-4px; border-radius:50%; border:1px solid rgba(212,175,90,0.3); }
+.pavatar.teamA { background: radial-gradient(circle at 35% 30%, #7fd8a8, #2a9d6a) !important; color:#04140c !important; border-color:#a8f0cc !important; }
+.pavatar.teamB { background: radial-gradient(circle at 35% 30%, #f0b878, #c47a2e) !important; color:#1a0e04 !important; border-color:#f8d4a0 !important; }
+.pbox-name { font-family:'Cormorant Garamond' !important; font-size:13px !important; color:#e0d4b0 !important; font-weight:600; }
+.pbox-meta { color:#a89878 !important; }
+
+/* Rang selector name pill emphasis */
+.pbadge, .badge-dealer, .badge-rang { background: rgba(212,175,90,0.18) !important; border:1px solid rgba(212,175,90,0.45) !important; color:#e6c878 !important; border-radius:2px !important; letter-spacing:1px; }
+
+/* Buttons — Majlis gold */
+.btn-primary, .btn-confirm { background: linear-gradient(180deg,#e6c878,#c4a04e) !important; color:#0c0a08 !important; border:none !important; box-shadow: 0 4px 18px rgba(212,175,90,0.4), inset 0 1px 0 rgba(255,255,255,0.4) !important; font-weight:600; letter-spacing:0.5px; }
+.btn-secondary { background: linear-gradient(180deg,#1e3a2c,#12241a) !important; color:#e6c878 !important; border:1px solid rgba(212,175,90,0.4) !important; }
+.btn-ghost { background: rgba(255,255,255,0.05) !important; color:#e0d4b0 !important; border:1px solid rgba(212,175,90,0.35) !important; }
+.btn-danger { background: linear-gradient(180deg,#a83028,#7a221c) !important; color:#f5e6c4 !important; border:none !important; }
+
+/* Challenge panel */
+.ch-panel { background: rgba(20,15,8,0.75) !important; border-radius: 10px !important; border:1px solid rgba(212,175,90,0.2); }
+
+/* Lobby refinement */
+.lobby-panel { background: linear-gradient(180deg, rgba(20,15,8,0.7), rgba(12,9,5,0.6)) !important; border:1px solid rgba(212,175,90,0.25) !important; }
+.code-prefix { background: rgba(212,175,90,0.15) !important; border:1px solid rgba(212,175,90,0.4) !important; color:#e6c878 !important; }
+h1, .lobby-title { font-family:'Cormorant Garamond' !important; color:#f5e6c4 !important; }
+
+/* Modals — parchment feel */
+.mbox { background: linear-gradient(180deg, #16281e, #0e1b14) !important; border:1px solid rgba(212,175,90,0.4) !important; }
+.mbox h2 { font-family:'Cormorant Garamond' !important; color:#e6c878 !important; }
+
+/* Pile mini-cards keep bigger suit too */
+.mini-card .ms { font-size: 11px !important; }
+
+@media (max-width: 700px) {
+  .card .cs, .hand-card .cs { font-size: 18px !important; }
+  .face-glyph { font-size: 20px !important; }
+  .pavatar { width: 30px !important; height: 30px !important; font-size: 13px !important; }
+}
+
+
+/* ── v8 fixes: pile suit symbols 10% smaller ───────────────────────────── */
+.mini-card .ms { font-size: 9.9px !important; }
+@media (max-width: 700px){ .mini-card .ms { font-size: 7.2px !important; } }
+
+/* ── v8b: bolder, larger rank on played/trick cards ────────────────────── */
+.card .cr { font-size: 20px !important; font-weight: 900 !important; letter-spacing: -0.5px; }
+@media (max-width: 700px){ .card .cr { font-size: 18px !important; font-weight: 900 !important; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP 2 — ANIMATION & VISUAL POLISH PASS (v9)
+   GPU-accelerated transforms only (smooth on average Android).
+   Presentation layer only — no rule/logic changes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Global easing + smoothing ─────────────────────────────────────────── */
+:root{
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --gold: #e6c878;
+  --gold-soft: rgba(212,175,90,0.5);
+}
+*{ -webkit-tap-highlight-color: transparent; }
+
+/* ── Table depth: directional lighting + soft reflection ───────────────── */
+.game-table{ position:relative; }
+.game-table::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 15%, rgba(255,240,200,0.06), transparent 60%),
+    radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.35) 100%);
+}
+
+/* ── Trick area: felt texture + inner glow depth ───────────────────────── */
+.trick-area{
+  background-image:
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.03) 0 2px, transparent 2px 4px),
+    linear-gradient(135deg, rgba(30,20,10,0.55), rgba(18,12,6,0.45)) !important;
+  transition: box-shadow 0.5s var(--ease-out);
+}
+
+/* ── PLAYED CARDS: fly-in + settle ─────────────────────────────────────── */
+.trick-slot .card{
+  animation: cardPlayIn 0.42s var(--ease-out) both;
+  will-change: transform, opacity;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.55), 0 2px 6px rgba(0,0,0,0.4);
+}
+@keyframes cardPlayIn{
+  0%{ opacity:0; transform: translateY(-38px) scale(0.7) rotate(0deg); }
+  70%{ opacity:1; }
+  100%{ opacity:1; }
+}
+/* direction-aware entrances by slot */
+#ts-top    .card{ animation-name: playFromTop; }
+#ts-bot    .card{ animation-name: playFromBot; }
+#ts-left   .card{ animation-name: playFromLeft; }
+#ts-right  .card{ animation-name: playFromRight; }
+@keyframes playFromTop{ 0%{opacity:0;transform:translateY(-70px) scale(0.6)} 100%{opacity:1} }
+@keyframes playFromBot{ 0%{opacity:0;transform:translateY(70px) scale(0.6)} 100%{opacity:1} }
+@keyframes playFromLeft{ 0%{opacity:0;transform:translateX(-80px) scale(0.6)} 100%{opacity:1} }
+@keyframes playFromRight{ 0%{opacity:0;transform:translateX(80px) scale(0.6)} 100%{opacity:1} }
+
+.card{ transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
+.card.led-card{ box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(212,175,90,0.4), 0 8px 22px rgba(0,0,0,0.5) !important; }
+
+/* ── HAND CARDS: hover, selection lift + glow ──────────────────────────── */
+.hand-card{
+  transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-out), filter 0.2s;
+  will-change: transform;
+}
+@media (hover:hover){
+  .my-hand .hand-card:hover{ transform: translateY(-14px) scale(1.05) !important; z-index:20 !important; box-shadow:0 12px 28px rgba(0,0,0,0.5) !important; }
+}
+.my-hand .hand-card:active{ transform: translateY(-8px) scale(1.02); }
+.hand-card.selected{
+  animation: cardSelectPulse 1.6s ease-in-out infinite;
+}
+@keyframes cardSelectPulse{
+  0%,100%{ box-shadow: 0 0 22px rgba(212,175,90,0.6), 0 8px 20px rgba(0,0,0,0.5); }
+  50%{ box-shadow: 0 0 32px rgba(212,175,90,0.95), 0 8px 24px rgba(0,0,0,0.55); }
+}
+.hand-card.disabled{ filter: grayscale(0.4) brightness(0.72); }
+
+/* Hand entrance: deal-in stagger */
+.my-hand.dealing .hand-card{
+  animation: handDealIn 0.5s var(--ease-out) both;
+}
+@keyframes handDealIn{
+  0%{ opacity:0; transform: translateY(60px) scale(0.8) rotate(0deg); }
+  100%{ opacity:1; }
+}
+
+/* ── DERIVED: card dealing sweep from center for player boxes ───────────── */
+@keyframes dealPop{
+  0%{ opacity:0; transform: scale(0.4); }
+  60%{ opacity:1; transform: scale(1.08); }
+  100%{ transform: scale(1); }
+}
+
+/* ── TURN INDICATOR: breathing glow on active player ───────────────────── */
+.pbox.active{
+  animation: turnBreathe 2s ease-in-out infinite;
+}
+@keyframes turnBreathe{
+  0%,100%{ box-shadow: 0 0 0 1px var(--gold-soft), 0 0 10px rgba(212,175,90,0.25); }
+  50%{ box-shadow: 0 0 0 1.5px var(--gold), 0 0 22px rgba(212,175,90,0.55); }
+}
+.pbox.active .pavatar{ animation: avatarGlow 2s ease-in-out infinite; }
+@keyframes avatarGlow{
+  0%,100%{ box-shadow: 0 0 14px rgba(212,175,90,0.4), 0 3px 10px rgba(0,0,0,0.5); }
+  50%{ box-shadow: 0 0 22px rgba(212,175,90,0.75), 0 3px 10px rgba(0,0,0,0.5); }
+}
+
+/* Thinking dots for active player */
+.thinking-dots{ display:inline-flex; gap:3px; margin-left:4px; vertical-align:middle; }
+.thinking-dots i{ width:4px; height:4px; border-radius:50%; background:var(--gold); animation: think 1.2s infinite; }
+.thinking-dots i:nth-child(2){ animation-delay:0.2s; }
+.thinking-dots i:nth-child(3){ animation-delay:0.4s; }
+@keyframes think{ 0%,60%,100%{opacity:0.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-3px)} }
+
+/* ── Winner banner: elegant slide + shimmer ────────────────────────────── */
+.winner-banner{
+  animation: bannerIn 0.4s var(--ease-spring) both;
+  background: linear-gradient(180deg, rgba(253,246,227,0.97), rgba(240,214,138,0.95)) !important;
+  color:#5a3d0a !important; font-weight:700; letter-spacing:0.3px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 24px rgba(212,175,90,0.3) !important;
+  position:relative; overflow:hidden;
+}
+.winner-banner::after{
+  content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  animation: shimmer 1.4s ease-in-out;
+}
+@keyframes bannerIn{ 0%{opacity:0;transform:translateY(-10px) scale(0.9)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes shimmer{ 0%{left:-60%} 100%{left:120%} }
+
+/* ── Pile mini-cards: gentle appear ────────────────────────────────────── */
+.pile-trick{ animation: pileIn 0.35s var(--ease-out) both; }
+@keyframes pileIn{ 0%{opacity:0;transform:translateY(8px) scale(0.85)} 100%{opacity:1} }
+
+/* ── Score counters: pop on change ─────────────────────────────────────── */
+.ts-num{ transition: transform 0.3s var(--ease-spring), color 0.3s; display:inline-block; }
+.ts-num.bump{ animation: scoreBump 0.5s var(--ease-spring); }
+@keyframes scoreBump{ 0%{transform:scale(1)} 40%{transform:scale(1.5); color:var(--gold)} 100%{transform:scale(1)} }
+
+/* ── Buttons: press + hover micro-interactions ─────────────────────────── */
+.btn{ transition: transform 0.14s var(--ease-out), box-shadow 0.2s, filter 0.2s; will-change:transform; }
+.btn:active{ transform: scale(0.94); }
+@media (hover:hover){ .btn:not(:disabled):hover{ filter: brightness(1.08); transform: translateY(-1px); } }
+.btn-ch{ transition: transform 0.14s var(--ease-out), box-shadow 0.2s; }
+.btn-ch:active{ transform: scale(0.93); }
+
+/* ── Modals: smooth scale-in ───────────────────────────────────────────── */
+.modal{ transition: opacity 0.25s ease; }
+.modal:not(.hidden) .mbox{ animation: modalIn 0.32s var(--ease-spring) both; }
+@keyframes modalIn{ 0%{opacity:0;transform:translateY(16px) scale(0.94)} 100%{opacity:1;transform:translateY(0) scale(1)} }
+
+/* ── Challenge popups: dramatic entrance ───────────────────────────────── */
+.taunt.hidden, .celebrate.hidden{ display:none; }
+.taunt-inner, .celebrate-inner{ animation: dramaZoom 0.5s var(--ease-spring) both; }
+@keyframes dramaZoom{ 0%{opacity:0;transform:scale(0.3) rotate(-8deg)} 60%{transform:scale(1.1) rotate(2deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+
+/* ── Dealer selection card flip during jack-hunt ───────────────────────── */
+.deal-card-flip{ animation: flipReveal 0.5s var(--ease-out) both; transform-style:preserve-3d; }
+@keyframes flipReveal{ 0%{transform:rotateY(90deg);opacity:0} 100%{transform:rotateY(0);opacity:1} }
+
+/* ── Rang badge subtle glow ────────────────────────────────────────────── */
+.tb-pill.rang-pill{ animation: rangGlow 3s ease-in-out infinite; }
+@keyframes rangGlow{ 0%,100%{box-shadow:0 0 0 rgba(212,175,90,0)} 50%{box-shadow:0 0 12px rgba(212,175,90,0.4)} }
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+}
+
+/* ── v10: suit symbol nudged 5% down on played/trick cards ──────────────── */
+.card .ctop { position: relative; top: 5%; }
+
+/* Flying card (collection sweep) keeps its look while animating */
+.flying-card { box-shadow: 0 8px 24px rgba(0,0,0,0.55) !important; border-radius: 8px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v11 — CLASSIC SOLITAIRE CARD FACE (appearance ONLY)
+   Changes ONLY the card face look: plain white, corner rank+suit, big centre
+   suit. Does NOT touch size, position, fan, rotation, animations, or layout.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Plain white face (override Majlis parchment on cards only) */
+.card, .hand-card, .mini-card {
+  background: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.28), 0 0 0 0.5px rgba(0,0,0,0.18) !important;
+  border: 0.5px solid #d8d8d8 !important;
+}
+
+/* Corner rank + suit — small, stacked, top-left (classic) */
+.card .ctop, .hand-card .ctop, .mini-card .ctop {
+  position: absolute; top: 3px; left: 4px;
+  display: flex; flex-direction: column; align-items: center; line-height: 1;
+}
+.card .cr, .hand-card .cr, .mini-card .cr { font-weight: 800 !important; font-family: Arial, 'Helvetica Neue', sans-serif !important; }
+.card .cs, .hand-card .cs, .mini-card .cs { line-height: 1 !important; margin-top: 1px; }
+
+/* Large centered suit symbol (the classic look) */
+.ccenter {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 30px; line-height: 1; pointer-events: none;
+}
+.hand-card .ccenter { font-size: 30px; }
+.card .ccenter { font-size: 28px; }
+.mini-card .ccenter { display: none; } /* too small to be useful on pile minis */
+
+/* Classic red / black colors */
+.card.red .cr, .card.red .cs, .card.red .ccenter,
+.hand-card.red .cr, .hand-card.red .cs, .hand-card.red .ccenter,
+.mini-card.red .cr, .mini-card.red .cs { color: #d40000 !important; }
+.card.black .cr, .card.black .cs, .card.black .ccenter,
+.hand-card.black .cr, .hand-card.black .cs, .hand-card.black .ccenter,
+.mini-card.black .cr, .mini-card.black .cs { color: #111111 !important; }
+
+/* Keep player-name tag subtle at the bottom, out of the way */
+.card .cbot, .hand-card .cbot { color: #9aa0a6 !important; }
+
+@media (max-width: 700px){
+  .ccenter { font-size: 24px; }
+  .hand-card .ccenter { font-size: 24px; }
+  .card .ccenter { font-size: 22px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v12 — CARD FACE: rank top-left, suit top-right, big centre suit
+   (appearance ONLY — no size/position/layout/animation changes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Rank in the TOP-LEFT corner */
+.card .cr-tl, .hand-card .cr-tl, .mini-card .cr-tl {
+  position: absolute; top: 3px; left: 5px;
+  font-weight: 800; font-family: Arial, 'Helvetica Neue', sans-serif;
+  line-height: 1;
+}
+/* Suit in the TOP-RIGHT corner — same small size as the rank */
+.card .cs-tr, .hand-card .cs-tr, .mini-card .cs-tr {
+  position: absolute; top: 3px; right: 5px;
+  line-height: 1;
+}
+
+/* Sizes: corner rank + corner suit match each other */
+.hand-card .cr-tl, .hand-card .cs-tr { font-size: 16px; }
+.card .cr-tl, .card .cs-tr { font-size: 15px; }
+.mini-card .cr-tl, .mini-card .cs-tr { font-size: 10px; }
+
+/* Large centre suit */
+.hand-card .ccenter { font-size: 32px; }
+.card .ccenter { font-size: 30px; }
+
+/* Colors (classic red / black) apply to the new corner elements too */
+.card.red .cr-tl, .card.red .cs-tr, .card.red .ccenter,
+.hand-card.red .cr-tl, .hand-card.red .cs-tr, .hand-card.red .ccenter,
+.mini-card.red .cr-tl, .mini-card.red .cs-tr { color: #d40000 !important; }
+.card.black .cr-tl, .card.black .cs-tr, .card.black .ccenter,
+.hand-card.black .cr-tl, .hand-card.black .cs-tr, .hand-card.black .ccenter,
+.mini-card.black .cr-tl, .mini-card.black .cs-tr { color: #111111 !important; }
+
+@media (max-width: 700px){
+  .hand-card .cr-tl, .hand-card .cs-tr { font-size: 14px; }
+  .card .cr-tl, .card .cs-tr { font-size: 13px; }
+  .hand-card .ccenter { font-size: 26px; }
+  .card .ccenter { font-size: 24px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v13 — top-bar alignment · card overlap · my-turn glow
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. TOP BAR: keep all pills on one level line, vertically centered */
+.top-bar{
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.top-bar > *{ align-self: center !important; flex-shrink: 0; display:flex; align-items:center; }
+.tb-pill, .tb-reset, .tb-mute{
+  height: 30px; display: inline-flex !important; align-items: center; justify-content: center;
+  line-height: 1 !important;
+}
+.tb-pill.rang-pill{ height: 30px; }
+@media (max-width: 700px){
+  .tb-pill, .tb-reset, .tb-mute, .tb-pill.rang-pill{ height: 26px; }
+}
+
+/* 2. CARD OVERLAP FIX: give the big centre suit its own space, shrink slightly,
+      push corner glyphs tight to the corners so they never collide. */
+.card .cr-tl, .hand-card .cr-tl { top: 2px; left: 4px; }
+.card .cs-tr, .hand-card .cs-tr { top: 2px; right: 4px; }
+/* center suit sits lower-middle, clear of the top corners */
+.hand-card .ccenter { font-size: 26px; top: 58%; }
+.card .ccenter { font-size: 24px; top: 58%; }
+@media (max-width: 700px){
+  .hand-card .ccenter { font-size: 22px; top: 58%; }
+  .card .ccenter { font-size: 20px; top: 58%; }
+  .card .cr-tl, .card .cs-tr, .hand-card .cr-tl, .hand-card .cs-tr { font-size: 13px; }
+}
+
+/* 3. MY-TURN GLOW: ensure my own (bottom) panel shows the gold breathing glow.
+      (JS now adds .active to #pbox-bot on my turn — this makes it visible.) */
+.pbox-me.active, #pbox-bot.active{
+  border-color: rgba(212,175,90,0.8) !important;
+  animation: turnBreathe 2s ease-in-out infinite !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v14 — PROMINENT breathing golden "your turn" indicator
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Confirm Play button: strong breathing gold glow */
+#btn-confirm{
+  animation: goldBreathe 1.5s ease-in-out infinite;
+  border: 1.5px solid #f5d98a !important;
+}
+@keyframes goldBreathe{
+  0%,100%{
+    box-shadow: 0 0 10px rgba(230,200,120,0.55), 0 0 22px rgba(212,175,90,0.30), 0 4px 14px rgba(0,0,0,0.45);
+    transform: scale(1);
+  }
+  50%{
+    box-shadow: 0 0 22px rgba(245,217,138,0.95), 0 0 48px rgba(230,200,120,0.55), 0 4px 16px rgba(0,0,0,0.45);
+    transform: scale(1.035);
+  }
+}
+
+/* My own panel on my turn: much stronger gold pulse than before */
+.pbox-me.active, #pbox-bot.active{
+  border-color: #f5d98a !important;
+  animation: myTurnPulse 1.6s ease-in-out infinite !important;
+}
+@keyframes myTurnPulse{
+  0%,100%{ box-shadow: 0 0 0 1.5px rgba(230,200,120,0.7), 0 0 14px rgba(212,175,90,0.35); }
+  50%{ box-shadow: 0 0 0 2px #f5d98a, 0 0 30px rgba(245,217,138,0.75); }
+}
+
+/* Turn hint text glows gold on your turn */
+#pbox-bot.active + .my-hint, .my-hint{ transition: color 0.3s, text-shadow 0.3s; }
+#pbox-bot.active ~ .action-bar .my-hint{ color:#f5d98a; text-shadow:0 0 10px rgba(245,217,138,0.5); }
+
+@media (max-width: 700px){
+  @keyframes goldBreathe{
+    0%,100%{ box-shadow: 0 0 8px rgba(230,200,120,0.5), 0 3px 12px rgba(0,0,0,0.45); transform: scale(1); }
+    50%{ box-shadow: 0 0 18px rgba(245,217,138,0.9), 0 0 36px rgba(230,200,120,0.5), 0 3px 14px rgba(0,0,0,0.45); transform: scale(1.03); }
+  }
+}
+
+/* Score-edit in reset modal */
+.score-edit{ border-top:1px solid rgba(212,175,90,0.2); margin-top:8px; padding-top:10px; }
+.score-edit-lbl{ font-size:11px; color:#a89878; margin-bottom:8px; text-align:center; }
+.score-edit-row{ display:flex; gap:8px; align-items:flex-end; justify-content:center; flex-wrap:wrap; }
+.score-edit-row label{ display:flex; flex-direction:column; font-size:11px; color:#c8bfa8; gap:3px; }
+.score-edit-row input{ width:56px; padding:8px; text-align:center; background:rgba(255,255,255,0.06); border:1px solid rgba(212,175,90,0.3); border-radius:8px; color:#f5e6c4; font-size:15px; }
+.score-edit-row button{ padding:9px 14px; font-size:13px; border-radius:8px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM GRAPHICS UPGRADE — "Emerald Majlis" (2026-08-03)
+   Written fresh for this file's markup. Upgrades visuals only — no markup,
+   no game logic, no wording, no dimensions-of-behaviour changes.
+   Techniques: layered emerald felt, metallic-gold text, depth shadows,
+   ornamental suits, subtle motion. Everything below is additive/override CSS.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --pm-felt-0:#03130e; --pm-felt-1:#062419; --pm-felt-2:#0a3626;
+  --pm-gold-0:#fff2b4; --pm-gold-1:#e9c96f; --pm-gold-2:#bd8a2c; --pm-gold-3:#71480f;
+  --pm-ink:#f7f0da; --pm-muted:#b6c4bb;
+  --pm-line:rgba(233,201,111,.32); --pm-glow:rgba(233,201,111,.20);
+  --pm-shadow:0 20px 58px rgba(0,0,0,.5);
+  --pm-ease:cubic-bezier(.22,1,.36,1);
+  --pm-spring:cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── Global ground: deep emerald with a soft vignette + faint grid ──────────── */
+html,body{ background:#02100c !important; color:var(--pm-ink); }
+body{
+  background:
+    radial-gradient(circle at 50% 34%, rgba(30,120,80,.16), transparent 40%),
+    linear-gradient(150deg, #02100c 0%, #06231a 52%, #02100c 100%) !important;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.30;
+  background-image:
+    linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.011) 1px, transparent 1px);
+  background-size:36px 36px;
+  -webkit-mask-image:radial-gradient(circle at center,#000 22%,transparent 84%);
+          mask-image:radial-gradient(circle at center,#000 22%,transparent 84%);
+}
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:60;
+  box-shadow:inset 0 0 130px rgba(0,0,0,.72);
+}
+
+/* ── Lobby / splash: emerald radiance + faint suit watermark ────────────────── */
+#screen-lobby{
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(219,168,55,.16), transparent 36%),
+    radial-gradient(circle at 50% 56%, rgba(22,106,74,.22), transparent 48%),
+    linear-gradient(160deg, #02110c, #082619 54%, #020c08) !important;
+}
+#screen-lobby::after{
+  content:"\2660   \2665   \2666   \2663";
+  position:absolute; inset:auto 0 4%; text-align:center; pointer-events:none;
+  font:700 clamp(30px,7vw,74px)/1 'Cormorant Garamond',serif;
+  letter-spacing:clamp(18px,5vw,60px); color:rgba(233,201,111,.03);
+}
+
+/* Metallic gold logo with engraved shadow + crown accent */
+.logo, h1.lobby-title, .lobby-header .logo{
+  font-family:'Cormorant Garamond',serif !important; font-weight:700 !important;
+  letter-spacing:.07em; text-transform:uppercase;
+  color:transparent !important;
+  background:linear-gradient(180deg,#fff6c8 0%,#eecf74 44%,#a96e18 78%,#f4d981 100%) !important;
+  -webkit-background-clip:text !important; background-clip:text !important;
+  filter:drop-shadow(0 4px 0 rgba(74,42,6,.65)) drop-shadow(0 0 20px rgba(239,196,77,.16));
+}
+.logo-sub{
+  font-family:'Cormorant Garamond',serif !important; text-transform:uppercase;
+  letter-spacing:.2em; color:#e3c980 !important; font-size:12px;
+}
+
+/* Lobby panels: glassy emerald with gold hairline + inner ring */
+.lobby-panel{
+  background:linear-gradient(155deg, rgba(9,36,27,.95), rgba(2,15,11,.95)) !important;
+  border:1px solid var(--pm-line) !important; border-radius:18px !important;
+  box-shadow:var(--pm-shadow), inset 0 1px rgba(255,255,255,.05), 0 0 0 5px rgba(0,0,0,.13) !important;
+  -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+}
+.lobby-panel::before{
+  content:""; display:block; height:1px; margin:-6px 16% 14px;
+  background:linear-gradient(90deg,transparent,var(--pm-gold-1),transparent); opacity:.65;
+}
+
+/* Inputs: sunken emerald wells */
+#screen-lobby input[type="text"], #screen-lobby input[type="number"], .lobby-panel input{
+  background:rgba(0,9,7,.7) !important; border:1px solid rgba(233,201,111,.26) !important;
+  color:#fff9e8 !important; border-radius:11px !important;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.32) !important;
+}
+#screen-lobby input:focus, .lobby-panel input:focus{
+  border-color:#e6c66a !important;
+  box-shadow:0 0 0 3px rgba(230,198,106,.12), inset 0 2px 8px rgba(0,0,0,.3) !important;
+}
+
+/* Buttons: raised, with lift on press; gold primary, emerald confirm */
+.btn{
+  border-radius:11px; font-weight:600; letter-spacing:.02em;
+  transition:transform .16s var(--pm-ease), filter .16s var(--pm-ease), box-shadow .16s var(--pm-ease);
+}
+.btn:active:not(:disabled){ transform:translateY(0) scale(.985); }
+.btn-primary{
+  color:#152016 !important;
+  background:linear-gradient(180deg,#f3d989,#c89532 58%,#9e6818) !important;
+  border:1px solid #f6df95 !important; text-shadow:0 1px rgba(255,255,255,.25);
+  box-shadow:0 8px 22px rgba(180,125,29,.24), inset 0 1px #fff2b5 !important;
+}
+.btn-primary:hover:not(:disabled){ transform:translateY(-2px); filter:brightness(1.07); }
+.btn-secondary, .btn-confirm{
+  background:linear-gradient(180deg,#17744d,#0a4c33) !important;
+  border:1px solid #49a777 !important; color:#fff !important;
+}
+.btn-ghost{ background:rgba(255,255,255,.04) !important; color:#dfcf9d !important; border:1px solid rgba(233,201,111,.28) !important; }
+
+/* Room code + seat tiles: shimmer sweep on hover */
+.room-code-box{ background:rgba(0,10,7,.55) !important; border:1px solid rgba(233,201,111,.22) !important; border-radius:13px !important; }
+.rc-val{ font-family:'Cormorant Garamond',serif !important; color:#f0d277 !important; text-shadow:0 0 13px rgba(240,210,119,.24); }
+.seat-tile{
+  position:relative; overflow:hidden;
+  background:linear-gradient(145deg, rgba(11,49,36,.7), rgba(2,17,12,.9)) !important;
+  border:1px solid rgba(233,201,111,.2) !important; border-radius:13px !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035) !important;
+}
+.seat-tile::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);
+  transform:translateX(-130%); transition:transform .6s var(--pm-ease);
+}
+.seat-tile:hover::after{ transform:translateX(130%); }
+
+/* ── Game shell + top bar ───────────────────────────────────────────────────── */
+#screen-game{
+  background:
+    radial-gradient(ellipse at center, rgba(16,94,63,.2), transparent 58%),
+    linear-gradient(155deg,#010806,#061a14 52%,#010806) !important;
+}
+.top-bar{
+  background:linear-gradient(180deg, rgba(3,19,14,.98), rgba(1,9,7,.94)) !important;
+  border-bottom:1px solid rgba(233,201,111,.26) !important;
+  box-shadow:0 8px 26px rgba(0,0,0,.36); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+}
+.tb-pill{
+  background:rgba(5,30,22,.85) !important; border:1px solid rgba(233,201,111,.2) !important;
+  color:#d8e1db !important; box-shadow:inset 0 1px rgba(255,255,255,.04) !important;
+}
+.tb-pill.rang-pill{
+  color:#f5d675 !important; border-color:rgba(245,214,117,.4) !important;
+  box-shadow:0 0 13px rgba(245,214,117,.08), inset 0 1px rgba(255,255,255,.04) !important;
+}
+.tb-mute, .tb-reset{ background:rgba(7,29,22,.85) !important; border:1px solid rgba(233,201,111,.23) !important; color:#ead693 !important; }
+
+/* Felt table: layered radial + faint concentric texture + oval inset frame + ghost suit */
+.game-table{
+  position:relative;
+  background:
+    radial-gradient(ellipse at center, rgba(16,110,72,.2), transparent 52%),
+    repeating-radial-gradient(ellipse at center, rgba(255,255,255,.008) 0 1px, transparent 1px 5px),
+    linear-gradient(150deg,#06271c,#093326 48%,#041b14) !important;
+  border:1px solid rgba(233,201,111,.3) !important;
+  box-shadow:inset 0 0 92px rgba(0,0,0,.62), inset 0 0 0 7px rgba(0,0,0,.17), 0 0 42px rgba(0,0,0,.48) !important;
+}
+.game-table::before{
+  content:""; position:absolute; inset:9px; border:1px solid rgba(233,201,111,.12);
+  border-radius:42%; pointer-events:none; box-shadow:inset 0 0 30px rgba(233,201,111,.04);
+}
+.game-table::after{
+  content:"\2660"; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font:700 min(23vw,220px)/1 'Cormorant Garamond',serif; color:rgba(233,201,111,.024); pointer-events:none;
+}
+.area-top, .area-mid, .area-bottom{ position:relative; z-index:2; }
+
+/* Player plates: hide avatars, add crown accent, gold active-turn pulse */
+.pavatar{ display:none !important; }
+.pbox{
+  background:linear-gradient(145deg, rgba(5,31,23,.95), rgba(1,14,10,.93)) !important;
+  border:1px solid rgba(233,201,111,.26) !important; border-radius:12px !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.05) !important;
+}
+.pbox-name{ color:#fff9e6 !important; font-weight:600; }
+.pbox-meta{ color:#a8bdb1 !important; }
+.pbox-cnt{ color:#edcf77 !important; }
+.pbox-me{ border-color:rgba(239,204,102,.6) !important; box-shadow:0 0 22px rgba(225,183,67,.12), 0 8px 20px rgba(0,0,0,.38) !important; }
+.pbox.active-turn, .pbox.active{
+  animation:pmTurnPulse 1.5s ease-in-out infinite;
+  border-color:#f0d472 !important;
+  box-shadow:0 0 0 2px rgba(240,212,114,.08), 0 0 24px rgba(240,212,114,.2) !important;
+}
+@keyframes pmTurnPulse{ 50%{ filter:brightness(1.16); transform:translateY(-1px); } }
+
+/* Challenge controls + turn label + center info */
+.ch-panel{ background:rgba(2,17,12,.72) !important; border:1px solid rgba(233,201,111,.18) !important; border-radius:12px !important; box-shadow:0 8px 16px rgba(0,0,0,.22) !important; }
+.btn-ch{ border-radius:9px !important; border:1px solid rgba(233,201,111,.28) !important; box-shadow:inset 0 1px rgba(255,255,255,.05), 0 5px 11px rgba(0,0,0,.2) !important; }
+.turn-lbl{
+  background:linear-gradient(180deg, rgba(15,92,60,.96), rgba(6,54,36,.96)) !important;
+  border:1px solid #56b881 !important; color:#f2fff7 !important;
+  box-shadow:0 0 18px rgba(65,186,121,.16) !important; letter-spacing:.06em;
+}
+.winner-banner{
+  font-family:'Cormorant Garamond',serif !important;
+  background:linear-gradient(180deg,#f4dc8d,#bc8124) !important; color:#241600 !important;
+  border:1px solid #ffe9a6 !important; box-shadow:0 8px 24px rgba(190,129,36,.3) !important;
+}
+.center-info{ background:rgba(1,13,9,.6) !important; border:1px solid rgba(233,201,111,.14) !important; -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); }
+
+/* ── Cards: warm ivory face, deep shadow, gold-ring select ──────────────────── */
+.card, .hand-card{
+  border-radius:7px; border:1px solid rgba(45,32,16,.38);
+  background:linear-gradient(135deg,#fffdf4,#eee5d2);
+  box-shadow:0 8px 16px rgba(0,0,0,.36), inset 0 0 0 1px rgba(255,255,255,.7);
+  transition:transform .16s var(--pm-ease), filter .16s var(--pm-ease), box-shadow .16s var(--pm-ease);
+}
+.hand-card:hover{ transform:translateY(-12px) !important; filter:brightness(1.04); box-shadow:0 17px 26px rgba(0,0,0,.44), 0 0 0 2px rgba(237,201,101,.24) !important; }
+.hand-card.selected{ box-shadow:0 20px 32px rgba(0,0,0,.48), 0 0 0 3px #eacb70, 0 0 22px rgba(234,203,112,.26) !important; }
+.my-hand{ filter:drop-shadow(0 12px 11px rgba(0,0,0,.28)); }
+
+/* Card backs: emerald with gold guilloché-style pattern */
+.card.back, .hand-card.back{
+  background-color:#082c20;
+  background-image:
+    radial-gradient(circle at center, transparent 0 15%, rgba(226,191,93,.17) 15% 18%, transparent 18% 30%, rgba(226,191,93,.14) 30% 33%, transparent 33%),
+    repeating-linear-gradient(45deg, rgba(235,204,116,.1) 0 2px, transparent 2px 7px),
+    linear-gradient(135deg,#0b3a29,#03160f);
+  border:2px solid #c89a3d;
+  box-shadow:inset 0 0 0 3px #062318, inset 0 0 0 4px rgba(238,205,113,.42), 0 8px 17px rgba(0,0,0,.4);
+}
+
+/* Action bar */
+.action-bar{ background:linear-gradient(180deg, rgba(4,23,17,.72), rgba(1,12,9,.85)) !important; border:1px solid rgba(233,201,111,.15) !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+
+/* ── Modals: framed emerald box with inner ring + suit footer ───────────────── */
+.modal{ background:rgba(0,7,5,.74) !important; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+.mbox{
+  position:relative; overflow:hidden;
+  background:linear-gradient(155deg, rgba(8,40,30,.98), rgba(2,15,11,.99)) !important;
+  border:1px solid rgba(233,201,111,.42) !important; border-radius:20px !important;
+  box-shadow:0 30px 88px rgba(0,0,0,.68), inset 0 1px rgba(255,255,255,.05), 0 0 0 6px rgba(0,0,0,.14) !important;
+}
+.mbox::before{
+  content:""; position:absolute; inset:7px; border:1px solid rgba(233,201,111,.1);
+  border-radius:14px; pointer-events:none;
+}
+.mbox h2{ font-family:'Cormorant Garamond',serif !important; color:#efd47c !important; letter-spacing:.03em; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+.mbox p{ color:#bdcac2 !important; }
+.mhand, .partner-view, .dealer-log, .vote-status{ background:rgba(0,10,7,.5) !important; border:1px solid rgba(233,201,111,.16) !important; border-radius:12px !important; }
+
+/* Suit-choice buttons: raised ivory tiles, darker premium variant for rang pick */
+.btn-suit{ border-radius:14px; background:linear-gradient(150deg,#fffdf5,#e9dec9); box-shadow:0 9px 17px rgba(0,0,0,.34); transition:transform .15s var(--pm-ease), box-shadow .15s var(--pm-ease); }
+.btn-suit:hover{ transform:translateY(-4px) scale(1.02); box-shadow:0 15px 25px rgba(0,0,0,.4); }
+#m-rang .btn-suit, #m-13ch .btn-suit{
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212,175,55,.1), transparent 48%),
+    linear-gradient(155deg,#102c22 0%,#071d17 58%,#04130f 100%) !important;
+  border:1px solid rgba(212,175,55,.5) !important; color:#f3d98b !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.05), inset 0 -14px 24px rgba(0,0,0,.2), 0 8px 17px rgba(0,0,0,.3) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+#m-rang .btn-suit small, #m-13ch .btn-suit small{ color:rgba(244,235,203,.72) !important; }
+#m-rang .heart-btn, #m-rang .diamond-btn, #m-13ch .heart-btn, #m-13ch .diamond-btn{ color:#ff7676 !important; }
+#m-rang .spade-btn, #m-rang .club-btn, #m-13ch .spade-btn, #m-13ch .club-btn{ color:#f4df9b !important; }
+
+/* ── Full-screen celebrations & roasts: ray-spin backdrop + metallic titles ─── */
+.celebrate, .taunt{ background:radial-gradient(circle at center, rgba(8,50,35,.88), rgba(0,6,4,.96)) !important; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+.celebrate::before, .taunt::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(244,206,101,.06) 0deg 7deg, transparent 7deg 15deg);
+  animation:pmRaySpin 18s linear infinite;
+  -webkit-mask-image:radial-gradient(circle,#000,transparent 72%); mask-image:radial-gradient(circle,#000,transparent 72%);
+}
+@keyframes pmRaySpin{ to{ transform:rotate(360deg); } }
+.celebrate-inner, .taunt-inner{
+  position:relative;
+  background:linear-gradient(155deg, rgba(7,35,26,.96), rgba(1,13,10,.97)) !important;
+  border:1px solid rgba(240,207,110,.55) !important; border-radius:22px !important;
+  box-shadow:0 34px 96px rgba(0,0,0,.7), 0 0 52px rgba(226,181,60,.11), inset 0 1px rgba(255,255,255,.06) !important;
+}
+.celebrate-icon, .taunt-skull{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)); animation:pmIconPop .8s var(--pm-spring); }
+@keyframes pmIconPop{ 0%{ transform:scale(.35) rotate(-18deg); opacity:0; } 100%{ transform:scale(1) rotate(0); opacity:1; } }
+.celebrate-text{
+  font-family:'Cormorant Garamond',serif !important; letter-spacing:.07em;
+  color:transparent !important;
+  background:linear-gradient(180deg,#fff6c8,#e9c75e 52%,#a66d17) !important;
+  -webkit-background-clip:text !important; background-clip:text !important;
+  filter:drop-shadow(0 4px 0 rgba(64,38,4,.55));
+}
+.taunt-text{
+  font-family:'Cormorant Garamond',serif !important; letter-spacing:.07em;
+  color:transparent !important;
+  background:linear-gradient(180deg,#ffd0c8,#f06d58 55%,#8f1b13) !important;
+  -webkit-background-clip:text !important; background-clip:text !important;
+  filter:drop-shadow(0 4px 0 rgba(70,10,6,.5));
+}
+.celebrate-sub, .taunt-sub{ color:#dce6df !important; letter-spacing:.03em; }
+
+/* Confetti / fireworks glow, toast */
+.confetti-bit{ border-radius:2px; box-shadow:0 0 8px currentColor; }
+.fw-p{ box-shadow:0 0 9px currentColor; }
+.toast{ background:rgba(3,22,16,.94) !important; border:1px solid rgba(233,201,111,.33) !important; color:#fff3cf !important; box-shadow:0 14px 34px rgba(0,0,0,.44) !important; -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px); }
+
+/* ── Mobile polish ──────────────────────────────────────────────────────────── */
+@media (max-width:700px){
+  .lobby-panel{ padding:16px; border-radius:16px; }
+  .game-table::before{ inset:5px; border-radius:26%; }
+  .pbox{ border-radius:10px; }
+  .celebrate-inner, .taunt-inner{ margin:18px; padding:26px 20px; }
+}
+
+/* Personal hand is ALWAYS sharp and playable — no blur, ever */
+.my-hand{ filter: drop-shadow(0 12px 11px rgba(0,0,0,.28)); }
+.my-hand.hand-blurred{ filter: drop-shadow(0 12px 11px rgba(0,0,0,.28)) !important; opacity:1 !important; pointer-events:auto !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT FIXES (2026-08-04): top bar fit · side players alignment · vertical space
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── #3 TOP BAR: fit all pills on screen, no horizontal swiping ────────────── */
+.top-bar{
+  flex-wrap:nowrap !important;         /* never wrap or overflow-scroll */
+  gap:3px !important; padding:5px 6px !important;
+  align-items:center; overflow:hidden !important;
+}
+.tb-pill{
+  font-size:10px !important; padding:3px 6px !important;
+  flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; line-height:1.2;
+}
+.tb-pill.rang-pill{ font-size:11px !important; }
+/* mute + reset shrink to compact icons so they never push the row wide */
+#btn-mute, #btn-reset, .tb-mute, .tb-reset{
+  flex:0 0 auto; font-size:11px !important; padding:3px 6px !important; margin-left:auto;
+}
+#btn-reset, .tb-reset{ margin-left:2px; }
+@media (max-width:430px){
+  .tb-pill{ font-size:9px !important; padding:2px 5px !important; }
+  .tb-pill.rang-pill{ font-size:10px !important; }
+  .top-bar{ gap:2px !important; padding:4px 4px !important; }
+}
+
+/* ── #4 SIDE PLAYERS: stop them flying high — center them beside the table ──── */
+.area-mid{
+  align-items:center !important;      /* vertically center the 3 columns */
+}
+.mid-left, .mid-right{
+  display:flex !important; flex-direction:column; align-items:center;
+  justify-content:center !important;  /* center the player box in its column */
+  align-self:center !important;
+}
+/* The challenge panel under the left player shouldn't stretch the column tall */
+.ch-panel{ margin-top:6px; }
+
+/* ── #5 REDUCE VERTICAL FREE SPACE: tighten gaps so play area is compact ────── */
+.game-table{ gap:2px !important; padding:3px !important; }
+.area-top{ margin-bottom:2px; }
+.area-mid{ gap:3px !important; }
+.area-bottom{ gap:2px !important; }
+.mid-center{ gap:3px !important; }
+.trick-area{ padding:2px 0 !important; }
+.turn-lbl{ margin:2px 0 !important; padding:5px 14px !important; }
+.my-hand{ padding:2px 4px !important; }
+.action-bar{ padding:3px 4px !important; gap:5px !important; }
+.center-info{ padding:4px 10px !important; }
+/* trim the tall empty band between the table and your hand */
+.pbox{ padding:6px 9px !important; }
+.pbox-cnt{ margin-top:0 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REFINEMENTS (2026-08-04 v2): plain-text top bar · bigger pile · no power-up
+   no card counts · breathing gold turn indicator
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── TOP BAR: plain text, one font, only bold/unbold differs ────────────────── */
+.top-bar{
+  background:linear-gradient(180deg, rgba(28,22,12,0.92), rgba(20,15,9,0.82)) !important; /* lighter than before */
+  border-bottom:1px solid rgba(212,175,90,0.32) !important;
+  display:flex !important; align-items:center; gap:8px !important;
+  padding:7px 8px !important; flex-wrap:nowrap !important; overflow:hidden !important;
+}
+/* strip pill styling — make every item plain text in one type */
+.top-bar .tb-pill{
+  background:none !important; border:none !important; box-shadow:none !important;
+  border-radius:0 !important; padding:0 !important; margin:0 !important;
+  font-family:'Jost',sans-serif !important; font-weight:400 !important;
+  font-size:12px !important; color:#e8dcc0 !important;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em;
+  animation:none !important;
+}
+/* Room name: always fully visible, don't let it get clipped first */
+#tb-room{ flex:0 0 auto; max-width:none !important; font-weight:400; }
+/* Rang + selector: the ONE highlighted element — bold with a gold outline */
+#tb-rang.tb-pill{
+  flex:0 0 auto; font-weight:700 !important; color:#f4dc8b !important;
+  padding:3px 9px !important; border:1px solid rgba(233,201,111,.75) !important;
+  border-radius:8px !important;
+  box-shadow:0 0 10px rgba(233,201,111,.18), inset 0 0 8px rgba(233,201,111,.06) !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
+#tb-trick, #tb-series{ flex:0 0 auto; color:#d8ccac !important; }
+#btn-mute, .tb-mute, #btn-reset, .tb-reset{
+  flex:0 0 auto; background:rgba(212,175,90,.1) !important; border:1px solid rgba(212,175,90,.3) !important;
+  color:#ead693 !important; font-size:11px !important; padding:4px 8px !important; border-radius:8px !important;
+}
+#btn-mute, .tb-mute{ margin-left:auto; }
+@media (max-width:430px){
+  .top-bar .tb-pill{ font-size:11px !important; }
+  #tb-rang.tb-pill{ font-size:11px !important; padding:3px 7px !important; }
+  .top-bar{ gap:6px !important; }
+}
+
+/* ── Remove Power Up box (shouldn't show in-game; unbalances side players) ──── */
+#power-up, .power-up, .powerup, #btn-powerup, .btn-powerup,
+.mid-left .power-up, [id*="power"], [class*="power-up"]{ display:none !important; }
+
+/* ── Remove card counts under players ──────────────────────────────────────── */
+.pbox-cnt{ display:none !important; }
+
+/* ── Pile mini-cards (T1/T2…) ~20% bigger to use the vertical space ─────────── */
+.mini-card{ transform:scale(1.2); transform-origin:center; margin:2px 3px !important; }
+.pile-trick{ gap:5px !important; margin:5px 3px !important; }
+.pile-display, #pile-display{ gap:8px !important; padding:4px 2px !important; }
+
+/* ── Breathing gold "your turn" indicator on your name plate + subtle shake ── */
+.pbox.pbox-me.my-turn, .pbox.pbox-me.active{
+  animation:pmBreathe 1.6s ease-in-out infinite, pmNudge 1.6s ease-in-out infinite !important;
+  border-color:#f0d472 !important;
+}
+.pbox.pbox-me.my-turn .pbox-name, .pbox.pbox-me.active .pbox-name{
+  color:#ffe08a !important; font-weight:700 !important;
+  text-shadow:0 0 10px rgba(240,212,114,.55);
+}
+@keyframes pmBreathe{
+  0%,100%{ box-shadow:0 0 0 1px rgba(240,212,114,.3), 0 0 8px rgba(240,212,114,.15); }
+  50%{ box-shadow:0 0 0 2px rgba(240,212,114,.7), 0 0 22px rgba(240,212,114,.45); }
+}
+@keyframes pmNudge{
+  0%,92%,100%{ transform:translateX(0); }
+  94%{ transform:translateX(-2px); } 96%{ transform:translateX(2px); } 98%{ transform:translateX(-1px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REFINEMENTS v3 (2026-08-04): smaller mini-card text · 2 tricks side-by-side
+   brighter top bar text
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Pile: show 2 tricks side by side (2-column grid), mini-cards with smaller text */
+.pile-display, #pile-display{
+  display:grid !important; grid-template-columns:1fr 1fr !important;
+  gap:6px 10px !important; padding:4px 6px !important; justify-items:center;
+}
+.pile-trick{ gap:3px !important; margin:2px !important; }
+/* mini-cards: keep the ~20% bigger size but shrink the TEXT inside */
+.mini-card{ transform:scale(1.15); }
+.mini-card .mr{ font-size:9px !important; }
+.mini-card .ms{ font-size:9px !important; }
+.mini-card .pt-num, .pile-trick .pt-num{ font-size:9px !important; }
+
+/* Brighter top bar text */
+.top-bar .tb-pill{ color:#fff3d4 !important; }
+#tb-rang.tb-pill{ color:#ffe9a3 !important; text-shadow:0 1px 3px rgba(0,0,0,.6), 0 0 8px rgba(240,212,114,.3) !important; }
+#tb-trick, #tb-series{ color:#ede0c2 !important; }
+#tb-room{ color:#fff3d4 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   YOUR-TURN: fill the name plate with a prominent gold wash (not just outline)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pbox.pbox-me.my-turn, .pbox.pbox-me.active, #pbox-bot.my-turn, #pbox-bot.active{
+  background:linear-gradient(180deg, rgba(240,205,90,0.30), rgba(190,140,40,0.16)) !important;
+  border:1px solid #f0d472 !important;
+  animation:pmTurnFill 1.5s ease-in-out infinite !important;
+}
+.pbox.pbox-me.my-turn .pbox-name, .pbox.pbox-me.active .pbox-name,
+#pbox-bot.my-turn .pbox-name, #pbox-bot.active .pbox-name{
+  color:#fff4cf !important; font-weight:700 !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.5), 0 0 12px rgba(255,224,138,.6) !important;
+}
+.pbox.pbox-me.my-turn .pbox-meta, .pbox.pbox-me.active .pbox-meta,
+#pbox-bot.my-turn .pbox-meta, #pbox-bot.active .pbox-meta{
+  color:#f3e6c2 !important;
+}
+@keyframes pmTurnFill{
+  0%,100%{
+    background:linear-gradient(180deg, rgba(240,205,90,0.24), rgba(190,140,40,0.12));
+    box-shadow:0 0 0 1px rgba(240,212,114,.4), 0 0 14px rgba(240,212,114,.25);
+  }
+  50%{
+    background:linear-gradient(180deg, rgba(245,215,110,0.42), rgba(200,150,45,0.24));
+    box-shadow:0 0 0 2px rgba(245,220,130,.85), 0 0 30px rgba(245,220,130,.55);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PILE FIT FIX (2026-08-12): keep 2 tricks per row but ALWAYS fit screen width
+   — no horizontal swiping. Cards shrink to fit instead of overflowing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pile-display, #pile-display{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;   /* 2 tricks side by side */
+  gap:6px 8px !important;
+  padding:4px 6px !important;
+  width:100% !important; max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow-x:hidden !important;               /* never allow horizontal scroll */
+  justify-items:stretch !important;
+}
+.pile-trick{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:2px !important;
+  margin:0 !important;
+  min-width:0 !important;                      /* allow the trick to shrink */
+  overflow:hidden !important;
+}
+/* Remove the scale() that caused visual overflow; size the cards directly instead */
+.mini-card{
+  transform:none !important;
+  width:clamp(13px, 4.4vw, 22px) !important;   /* fluid: shrinks on narrow screens */
+  height:auto !important;
+  aspect-ratio:2 / 3 !important;
+  flex:0 1 auto !important;
+  min-width:0 !important;
+}
+.mini-card .mr, .mini-card .cr, .mini-card .cr-tl{ font-size:clamp(7px, 2.4vw, 11px) !important; }
+.mini-card .ms, .mini-card .cs, .mini-card .cs-tr{ font-size:clamp(6px, 2.2vw, 10px) !important; }
+.pile-trick .pt-num{ font-size:8px !important; flex:0 0 auto; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHALLENGE vs WALK-OVER button separation (2026-08-13)
+   Prevent a challenge tap from landing on a walk-over accept (which ends the hand).
+   Pure layout/visual — no logic change.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Give the walk-over ACCEPT/REJECT buttons clear separation from everything above,
+   a distinct look, and larger tap targets so they can't be hit by muscle-memory
+   taps aimed at the challenge buttons. */
+.btn-ch.wo-accept, .btn-ch.wo-reject{
+  margin-top:14px !important;
+  min-height:52px !important;
+  padding:12px 6px !important;
+  font-size:12px !important;
+  border-radius:10px !important;
+  position:relative;
+}
+/* A divider line + label above the walk-over decision buttons */
+.btn-ch.wo-accept{
+  border-top:2px dashed rgba(255,255,255,.35);
+  margin-top:18px !important;
+  background:linear-gradient(180deg, rgba(220,38,38,.9), rgba(150,20,20,.9)) !important; /* red = destructive */
+  color:#fff !important; border:1px solid #ef4444 !important;
+  box-shadow:0 4px 12px rgba(220,38,38,.3) !important;
+}
+.btn-ch.wo-reject{
+  background:linear-gradient(180deg, rgba(22,120,80,.9), rgba(12,80,52,.9)) !important; /* green = safe/play on */
+  color:#fff !important; border:1px solid #34d399 !important;
+}
+/* Extra breathing room so the challenge buttons sit well apart from the walk-over row */
+.btn-ch.five-ch, .btn-ch.thirt-ch{ margin-bottom:2px; }
+/* When walk-over buttons are visible, push them to the bottom with a visible gap */
+.ch-panel .btn-ch.wo-accept::before{
+  content:"⚠ Concede hand";
+  position:absolute; top:-16px; left:0; right:0;
+  font-size:8px; color:#fca5a5; letter-spacing:.04em; text-align:center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHALLENGE BUTTON GROUPING (2026-08-13): separate the CHALLENGE buttons from
+   the No-Challenge / Walk-Over buttons so a challenge tap can't hit a concede.
+   Layout only — no logic change.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ch-group{ display:flex; flex-direction:column; gap:5px; }
+/* Big visible gap + divider between the challenge group and the decline/concede group */
+.ch-group-decline{ margin-top:16px; padding-top:12px; border-top:2px dashed rgba(255,255,255,.28); }
+.ch-group-wo-response{ margin-top:18px; padding-top:12px; border-top:2px dashed rgba(255,255,255,.35); }
+/* Collapse a group that has no visible buttons (so empty groups don't add gaps) */
+.ch-group:not(:has(.btn-ch:not(.hidden))){ display:none !important; margin:0 !important; padding:0 !important; border:none !important; }
+/* Make the CHALLENGE buttons visually distinct (they INITIATE an action) */
+.btn-ch.five-ch, .btn-ch.thirt-ch{ min-height:44px; }
