@@ -1,5 +1,7 @@
 'use strict';
 
+const { randomInt } = require('crypto');
+
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const SUIT_SYMBOLS = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
 const SUIT_NAMES = { spades: 'Hukam', hearts: 'Dil', diamonds: 'Eent', clubs: 'Chiri' };
@@ -23,7 +25,7 @@ function buildDeck() {
 function shuffle(arr) {
   const d = [...arr];
   for (let i = d.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = randomInt(i + 1);
     [d[i], d[j]] = [d[j], d[i]];
   }
   return d;
@@ -947,3 +949,4 @@ class RangEngine {
 }
 
 module.exports = { RangEngine, SUIT_NAMES, SUIT_SYMBOLS, SUITS, TEAM_OF, NEXT_P, PREV_P, PARTNER_OF };
+
