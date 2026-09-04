@@ -1730,3 +1730,51 @@ body::after{
   transform:scale(.96);
   filter:brightness(.9);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   YOUR-TURN ATTENTION CUES (2026-09-04)
+   Stronger bottom-panel pulse plus a brief, non-interactive screen-edge flash.
+   ═══════════════════════════════════════════════════════════════════════════ */
+#pbox-bot.my-turn,
+#pbox-bot.active{
+  border:2px solid #ffe49a !important;
+  background:linear-gradient(180deg, rgba(255,225,118,.48), rgba(185,126,25,.24)) !important;
+  animation:yourTurnBeacon 1.05s ease-in-out infinite !important;
+}
+#pbox-bot.my-turn .pbox-name,
+#pbox-bot.active .pbox-name{
+  color:#fff9dc !important;
+  font-size:15px !important;
+  text-shadow:0 1px 3px rgba(0,0,0,.75), 0 0 16px rgba(255,225,118,.95) !important;
+}
+@keyframes yourTurnBeacon{
+  0%,100%{
+    transform:scale(1);
+    box-shadow:0 0 0 1px rgba(255,225,118,.65), 0 0 16px rgba(230,183,62,.42), inset 0 0 13px rgba(255,236,164,.12);
+  }
+  50%{
+    transform:scale(1.018);
+    box-shadow:0 0 0 3px rgba(255,235,165,.96), 0 0 42px rgba(255,208,74,.88), inset 0 0 22px rgba(255,239,173,.3);
+  }
+}
+
+.turn-attention-flash{
+  position:fixed;
+  inset:0;
+  z-index:190;
+  pointer-events:none;
+  border:7px solid rgba(255,221,112,.96);
+  box-shadow:inset 0 0 34px 9px rgba(255,204,48,.5), 0 0 24px rgba(255,221,112,.7);
+  animation:turnEdgeFlash 1.35s ease-out both;
+}
+@keyframes turnEdgeFlash{
+  0%,30%,62%,100%{ opacity:0; }
+  8%,42%{ opacity:1; }
+  18%,54%{ opacity:.18; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  #pbox-bot.my-turn,
+  #pbox-bot.active{ animation:none !important; }
+  .turn-attention-flash{ animation-duration:.45s; }
+}
