@@ -1653,3 +1653,80 @@ body::after{
 .ch-group:not(:has(.btn-ch:not(.hidden))){ display:none !important; margin:0 !important; padding:0 !important; border:none !important; }
 /* Make the CHALLENGE buttons visually distinct (they INITIATE an action) */
 .btn-ch.five-ch, .btn-ch.thirt-ch{ min-height:44px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM CHALLENGE ACTION PALETTE (Royal Ember — 2026-09-04)
+   Keep challenge initiation physically and visually separate from the safer
+   decline/concede choices. Visual only; no game behaviour changes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ch-group-challenge,
+.ch-group-decline{
+  padding:9px 7px;
+  border:1px solid rgba(214,165,45,.22);
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.12));
+}
+
+.ch-group-challenge::before,
+.ch-group-decline::before{
+  display:block;
+  margin:0 0 3px;
+  color:#f3d58a;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.11em;
+  line-height:1.2;
+  text-align:center;
+  text-transform:uppercase;
+}
+.ch-group-challenge::before{ content:"Challenge action"; }
+.ch-group-decline::before{ content:"Other decisions"; }
+
+/* A large neutral buffer prevents a challenge tap carrying into another action. */
+.ch-group-decline{
+  margin-top:22px;
+  padding-top:9px;
+  border-top:1px solid rgba(214,165,45,.22);
+  position:relative;
+}
+.ch-group-decline::after{
+  content:"";
+  position:absolute;
+  top:-13px;
+  left:18%;
+  right:18%;
+  border-top:1px dashed rgba(243,213,138,.42);
+}
+
+.btn-ch.five-ch,
+.btn-ch.thirt-ch{
+  min-height:48px;
+  color:#fff8f0;
+  border:1px solid #df654f;
+  background:linear-gradient(145deg, #d95535 0%, #c43b2b 52%, #99261f 100%);
+  box-shadow:0 5px 13px rgba(137,30,23,.34), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.btn-ch.no-ch{
+  min-height:46px;
+  color:#f0fff8;
+  border:1px solid #38b786;
+  background:linear-gradient(145deg, #239c73 0%, #16845f 55%, #0d6248 100%);
+  box-shadow:0 4px 11px rgba(8,75,53,.3), inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+.btn-ch.wo-btn{
+  min-height:46px;
+  color:#302000;
+  border:1px solid #f0ca62;
+  background:linear-gradient(145deg, #e8bd4b 0%, #d6a52d 55%, #a87513 100%);
+  box-shadow:0 4px 11px rgba(110,75,7,.3), inset 0 1px 0 rgba(255,255,255,.24);
+}
+
+.btn-ch.five-ch:active,
+.btn-ch.thirt-ch:active,
+.btn-ch.no-ch:active,
+.btn-ch.wo-btn:active{
+  transform:scale(.96);
+  filter:brightness(.9);
+}
