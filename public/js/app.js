@@ -110,20 +110,6 @@ const Snd = {
     g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.06,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
     o.connect(g); g.connect(this._out()); o.start(t); o.stop(t+0.13);
   },
-  // Distinct two-note cue played once when the local player's turn begins.
-  yourTurn(){
-    if(this.muted||!this.ctx) return;
-    const c=this.ctx, t=c.currentTime;
-    [659.25,987.77].forEach((freq,i)=>{
-      const st=t+i*0.16;
-      const o=c.createOscillator(), g=c.createGain();
-      o.type='triangle'; o.frequency.value=freq;
-      g.gain.setValueAtTime(0.0001,st);
-      g.gain.linearRampToValueAtTime(0.15,st+0.018);
-      g.gain.exponentialRampToValueAtTime(0.001,st+0.34);
-      o.connect(g); g.connect(this._out()); o.start(st); o.stop(st+0.36);
-    });
-  },
   // Dramatic challenge sting
   challenge(){
     if(this.muted||!this.ctx) return;
@@ -841,9 +827,8 @@ function flashYourTurn(){
 function updateActionBar(gs){
   const tp = gs.phase==='trick_play'||gs.phase==='five_card_trick_play';
   const myTurn = tp && getExpected(gs)===G.myNum;
-  // Sound + screen-edge flash once, at the moment it becomes your turn.
+  // Screen-edge flash once, at the moment it becomes your turn.
   if(myTurn && !_wasMyTurn){
-    Snd.yourTurn();
     flashYourTurn();
   }
   _wasMyTurn = myTurn;
