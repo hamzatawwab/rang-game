@@ -1794,3 +1794,46 @@ body::after{
   #pbox-bot.active{ animation:none !important; }
   .turn-attention-flash{ animation-duration:.45s; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE CONTAINMENT (2026-10-15)
+   Keep the voting panel inside its grid column and make the top bar fit.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width:700px){
+  .mid-left,
+  .ch-panel,
+  .ch-group,
+  .ch-status,
+  .decline-vote-row{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+  .ch-panel{ align-items:stretch !important; padding:5px 3px !important; }
+  .ch-group-challenge,
+  .ch-group-decline{ padding-left:3px !important; padding-right:3px !important; }
+  .decline-vote-title{ font-size:8px; line-height:1.2; }
+  .decline-vote-row{ gap:4px; padding:2px 3px; font-size:9px; }
+
+  .top-bar{
+    display:grid !important;
+    grid-template-columns:auto minmax(0,1fr) auto auto 28px 28px;
+    gap:3px !important;
+    width:100%; box-sizing:border-box;
+    padding:5px 4px !important;
+  }
+  .top-bar .tb-pill{ min-width:0 !important; font-size:9px !important; }
+  #tb-room{ max-width:72px !important; overflow:hidden; text-overflow:ellipsis; }
+  #tb-rang.tb-pill{
+    width:auto !important; min-width:0 !important;
+    padding:3px 5px !important; overflow:hidden; text-overflow:ellipsis;
+  }
+  #tb-trick, #tb-series{ font-size:9px !important; }
+  #btn-mute, #btn-reset, .tb-mute, .tb-reset{
+    width:28px !important; min-width:28px !important; height:27px;
+    padding:0 !important; margin:0 !important; overflow:hidden;
+  }
+  #btn-reset{ font-size:0 !important; }
+  #btn-reset::after{ content:'↻'; font-size:15px; }
+}
