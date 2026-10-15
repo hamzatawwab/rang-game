@@ -1550,7 +1550,9 @@ function bindEvents(){
   $('btn-trial-random-mode').addEventListener('click',()=>startTrial('random'));
   $('btn-trial-setup-cancel').addEventListener('click',()=>closeModal('m-trial-setup'));
   $('inp-trial-code').addEventListener('keydown',e=>{ if(e.key==='Enter') startTrial('seat'); });
-  $('btn-start-trial').addEventListener('click',()=>{ G.socket.emit('start_with_bots', { password: (G._startPw||undefined) }); G._startPw=undefined; });
+  // The trial code was already verified when the room was created, so use the
+  // dedicated trial start path instead of asking for a second admin password.
+  $('btn-start-trial').addEventListener('click',()=>{ G.socket.emit('start_trial'); });
   $('btn-trial-back').addEventListener('click',()=>{ hide('panel-trial'); show('panel-setup'); });
   $('btn-trial-copy').addEventListener('click',()=>{
     const url = location.origin + '?room=' + encodeURIComponent(G.roomCode);
