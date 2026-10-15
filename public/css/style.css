@@ -99,6 +99,7 @@ input[type="number"] { width: 64px; }
   box-shadow: 0 8px 28px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.08);
   font-size: 13px; font-weight: 700; letter-spacing: .2px;
 }
+.connection-status.hidden { display: none; }
 
 .decline-vote-title { color:#f4df9b; font-weight:700; margin-bottom:4px; }
 .decline-vote-row { display:flex; justify-content:space-between; gap:9px; min-width:125px; padding:2px 0; }
