@@ -1,6 +1,6 @@
 'use strict';
 
-const { randomInt } = require('crypto');
+const { randomInt, randomBytes } = require('crypto');
 
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const SUIT_SYMBOLS = { spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣' };
@@ -55,10 +55,10 @@ function freshState() {
   return {
     phase: 'lobby',
     players: {
-      1: { name:'', socketId:null, connected:false, hand:[], disconnectTimer:null },
-      2: { name:'', socketId:null, connected:false, hand:[], disconnectTimer:null },
-      3: { name:'', socketId:null, connected:false, hand:[], disconnectTimer:null },
-      4: { name:'', socketId:null, connected:false, hand:[], disconnectTimer:null },
+      1: { name:'', socketId:null, connected:false, hand:[], reconnectToken:null, disconnectTimer:null, disconnectNoticeTimer:null },
+      2: { name:'', socketId:null, connected:false, hand:[], reconnectToken:null, disconnectTimer:null, disconnectNoticeTimer:null },
+      3: { name:'', socketId:null, connected:false, hand:[], reconnectToken:null, disconnectTimer:null, disconnectNoticeTimer:null },
+      4: { name:'', socketId:null, connected:false, hand:[], reconnectToken:null, disconnectTimer:null, disconnectNoticeTimer:null },
     },
     seats: {},
     dealer: null,
@@ -119,6 +119,7 @@ class RangEngine {
       this.state.players[oldNum].connected = false;
     }
     p.socketId = socketId; p.name = name || `P${pNum}`; p.connected = true;
+    if (!p.reconnectToken) p.reconnectToken = randomBytes(32).toString('hex');
     this.state.seats[socketId] = pNum;
     return { ok:true };
   }
@@ -127,6 +128,7 @@ class RangEngine {
     const p = this.state.players[pNum];
     if (!p.name) return { ok:false, reason:'Seat was never taken' };
     if (p.disconnectTimer) { clearTimeout(p.disconnectTimer); p.disconnectTimer = null; }
+    if (p.disconnectNoticeTimer) { clearTimeout(p.disconnectNoticeTimer); p.disconnectNoticeTimer = null; }
     if (p.socketId && p.socketId !== socketId) delete this.state.seats[p.socketId];
     p.socketId = socketId; p.connected = true;
     this.state.seats[socketId] = pNum;
@@ -138,6 +140,19 @@ class RangEngine {
     if (!pNum) return null;
     this.state.players[pNum].connected = false;
     return pNum;
+  }
+
+  reconnectWithToken(socketId, pNum, token) {
+    const p = this.state.players[pNum];
+    if (!p || !p.reconnectToken || typeof token !== 'string' || token !== p.reconnectToken)
+      return { ok:false, reason:'Saved session is no longer valid' };
+    return this.reconnect(socketId, pNum);
+  }
+
+  ensureReconnectToken(pNum) {
+    const p = this.state.players[pNum];
+    if (!p.reconnectToken) p.reconnectToken = randomBytes(32).toString('hex');
+    return p.reconnectToken;
   }
 
   allSeated() { return [1,2,3,4].every(n => this.state.players[n].name && this.state.players[n].socketId); }
@@ -240,12 +255,13 @@ class RangEngine {
     if (!this.teamSeatsReady()) return { ok:false, reason:'All four players must pick distinct seats' };
 
     s.seats = {};
-    for (let n=1;n<=4;n++){ s.players[n].socketId=null; s.players[n].connected=false; s.players[n].name=''; s.players[n].hand=[]; }
+    for (let n=1;n<=4;n++){ s.players[n].socketId=null; s.players[n].connected=false; s.players[n].name=''; s.players[n].hand=[]; s.players[n].reconnectToken=null; }
 
     const place = (sid, seat) => {
       s.players[seat].socketId = sid;
       s.players[seat].name = td.names[sid];
       s.players[seat].connected = true;
+      s.players[seat].reconnectToken = randomBytes(32).toString('hex');
       s.seats[sid] = seat;
     };
     // All four players placed by their own chosen seats

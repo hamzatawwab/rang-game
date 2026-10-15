@@ -19,6 +19,7 @@ app.get('/', (req,res) => res.sendFile(path.join(__dirname,'../public/index.html
 
 const rooms = {};
 const DISCONNECT_MS = 3 * 60 * 1000;
+const DISCONNECT_NOTICE_MS = 20 * 1000;
 
 function roomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -56,6 +57,10 @@ function toPlayer(engine, pNum, event, data) {
 }
 
 function broadcast(engine, code) { pub(engine, code); hands(engine, code); }
+
+function playerSession(engine, playerNum) {
+  return { reconnectToken: engine.ensureReconnectToken(playerNum) };
+}
 
 // ── BOT DRIVER (trial mode only) ──────────────────────────────────────────────
 // Steps bots one action at a time with a natural delay, emitting the SAME socket
@@ -426,6 +431,32 @@ function stepBotOne(engine, code) {
 
 io.on('connection', socket => {
 
+  // Restore a fixed seat after a network handoff, refresh, call interruption,
+  // or reopening the game in the same browser. The token is private to that
+  // browser and is never included in public game state.
+  socket.on('resume_session', ({ roomCode: code, playerNum, reconnectToken }) => {
+    const engine = rooms[code];
+    const n = Number(playerNum);
+    if (!engine || ![1,2,3,4].includes(n)) return socket.emit('resume_failed', {});
+    const previousSocketId = engine.state.players[n].socketId;
+    const r = engine.reconnectWithToken(socket.id, n, reconnectToken);
+    if (!r.ok) return socket.emit('resume_failed', {});
+    // A reopened tab becomes authoritative; retire an older live connection so
+    // two tabs cannot submit actions for the same player.
+    if (previousSocketId && previousSocketId !== socket.id) {
+      const previousSocket = io.sockets.sockets.get(previousSocketId);
+      if (previousSocket) {
+        previousSocket.data.playerNum = null;
+        previousSocket.emit('session_replaced', {});
+        previousSocket.disconnect(true);
+      }
+    }
+    socket.join(code); socket.data.roomCode = code; socket.data.playerNum = n;
+    socket.emit('joined_room', { roomCode:code, playerNum:n, reconnected:true, ...playerSession(engine,n) });
+    broadcast(engine, code);
+    io.to(code).emit('player_reconnected', { playerNum:n, name:engine.state.players[n].name });
+  });
+
   // ── lobby ──────────────────────────────────────────────────────────────────
   socket.on('create_room', ({ name, playerNum, mode }) => {
     const code = roomCode();
@@ -447,7 +478,7 @@ io.on('connection', socket => {
     if (!r.ok) return socket.emit('error', { message: r.reason });
     socket.join(code);
     socket.data.roomCode = code; socket.data.playerNum = playerNum;
-    socket.emit('room_created', { roomCode: code, playerNum, mode: 'select_seat' });
+    socket.emit('room_created', { roomCode: code, playerNum, mode: 'select_seat', ...playerSession(engine,playerNum) });
     pub(engine, code);
   });
 
@@ -479,7 +510,7 @@ io.on('connection', socket => {
       engine.__bots = botSet;
       let mySeat=null; for (let n=1;n<=4;n++){ if (engine.state.players[n].socketId===socket.id) mySeat=n; }
       socket.data.playerNum = mySeat;
-      io.to(mySeat && engine.state.players[mySeat].socketId).emit('team_draw_seated', { playerNum: mySeat });
+      io.to(mySeat && engine.state.players[mySeat].socketId).emit('team_draw_seated', { playerNum: mySeat, roomCode:code, ...playerSession(engine,mySeat) });
       io.to(code).emit('all_players_joined', {});
       setTimeout(() => {
         io.to(code).emit('dealer_selection_result', fin.dealerResult);
@@ -510,7 +541,7 @@ io.on('connection', socket => {
           if (sid && !String(sid).startsWith('BOT_')){
             const sock = io.sockets.sockets.get(sid);
             if (sock) sock.data.playerNum = n;
-            io.to(sid).emit('team_draw_seated', { playerNum: n });
+            io.to(sid).emit('team_draw_seated', { playerNum: n, roomCode:code, ...playerSession(engine,n) });
           }
         }
         io.to(code).emit('all_players_joined', {});
@@ -538,7 +569,7 @@ io.on('connection', socket => {
       if (sid && !String(sid).startsWith('BOT_')) {
         const sock = io.sockets.sockets.get(sid);
         if (sock) sock.data.playerNum = n;
-        io.to(sid).emit('team_draw_seated', { playerNum: n });
+        io.to(sid).emit('team_draw_seated', { playerNum: n, roomCode:code, ...playerSession(engine,n) });
       }
     }
     io.to(code).emit('all_players_joined', {});
@@ -567,7 +598,7 @@ io.on('connection', socket => {
     engine.state.roomMode = 'select_seat';  // friends joining by code pick an open seat
     socket.join(code);
     socket.data.roomCode = code; socket.data.playerNum = 1;
-    socket.emit('trial_room_created', { roomCode: code, playerNum: 1 });
+    socket.emit('trial_room_created', { roomCode: code, playerNum: 1, ...playerSession(engine,1) });
     pub(engine, code);
   });
 
@@ -669,7 +700,7 @@ io.on('connection', socket => {
         const r = engine.reconnect(socket.id, match);
         if (r.ok) {
           socket.join(code); socket.data.roomCode = code; socket.data.playerNum = match;
-          socket.emit('joined_room', { roomCode:code, playerNum:match, reconnected:true });
+          socket.emit('joined_room', { roomCode:code, playerNum:match, reconnected:true, ...playerSession(engine,match) });
           broadcast(engine, code);
           io.to(code).emit('player_reconnected', { playerNum:match, name: engine.state.players[match].name });
           return;
@@ -761,7 +792,7 @@ io.on('connection', socket => {
       const r = engine.reconnect(socket.id, playerNum);
       if (!r.ok) return socket.emit('error', { message: r.reason });
       socket.join(code); socket.data.roomCode = code; socket.data.playerNum = playerNum;
-      socket.emit('joined_room', { roomCode:code, playerNum, reconnected:true });
+      socket.emit('joined_room', { roomCode:code, playerNum, reconnected:true, ...playerSession(engine,playerNum) });
       broadcast(engine, code);
       io.to(code).emit('player_reconnected', { playerNum, name: p.name });
       return;
@@ -779,7 +810,7 @@ io.on('connection', socket => {
         const r = engine.reconnect(socket.id, match);
         if (!r.ok) return socket.emit('error', { message: r.reason });
         socket.join(code); socket.data.roomCode = code; socket.data.playerNum = match;
-        socket.emit('joined_room', { roomCode:code, playerNum:match, reconnected:true });
+        socket.emit('joined_room', { roomCode:code, playerNum:match, reconnected:true, ...playerSession(engine,match) });
         broadcast(engine, code);
         io.to(code).emit('player_reconnected', { playerNum:match, name: s.players[match].name });
         return;
@@ -794,7 +825,7 @@ io.on('connection', socket => {
       engine.state.players[playerNum].connected = true;
       engine.state.seats[socket.id] = playerNum;
       socket.join(code); socket.data.roomCode = code; socket.data.playerNum = playerNum;
-      socket.emit('joined_room', { roomCode:code, playerNum, reconnected:false });
+      socket.emit('joined_room', { roomCode:code, playerNum, reconnected:false, ...playerSession(engine,playerNum) });
       io.to(code).emit('bot_replaced', { playerNum, name });
       broadcast(engine, code);
       runBots(engine, code); // in case a remaining bot is now on turn
@@ -806,7 +837,7 @@ io.on('connection', socket => {
     const r = engine.seatPlayer(socket.id, playerNum, name);
     if (!r.ok) return socket.emit('error', { message: r.reason });
     socket.join(code); socket.data.roomCode = code; socket.data.playerNum = playerNum;
-    socket.emit('joined_room', { roomCode:code, playerNum, reconnected:false });
+    socket.emit('joined_room', { roomCode:code, playerNum, reconnected:false, ...playerSession(engine,playerNum) });
     pub(engine, code);
 
     if (engine.allSeated()) {
@@ -1303,11 +1334,20 @@ io.on('connection', socket => {
     const { roomCode: code, playerNum } = socket.data;
     if (!code||!playerNum) return;
     const engine = rooms[code]; if (!engine) return;
-    engine.disconnect(socket.id);
-    const p = engine.state.players[playerNum];
-    io.to(code).emit('player_disconnected', { playerNum, name:p.name });
+    const disconnectedNum = engine.disconnect(socket.id);
+    if (!disconnectedNum) return; // an older/replaced socket no longer owns a seat
+    const p = engine.state.players[disconnectedNum];
+    // Tiny mobile-network interruptions are common. Only alarm the table if
+    // the same player is still disconnected after a short grace period.
+    if (p.disconnectNoticeTimer) clearTimeout(p.disconnectNoticeTimer);
+    p.disconnectNoticeTimer = setTimeout(() => {
+      if (!p.connected) io.to(code).emit('player_disconnected', { playerNum:disconnectedNum, name:p.name });
+      p.disconnectNoticeTimer = null;
+    }, DISCONNECT_NOTICE_MS);
+    if (p.disconnectTimer) clearTimeout(p.disconnectTimer);
     p.disconnectTimer = setTimeout(() => {
-      io.to(code).emit('player_timeout', { playerNum, name:p.name });
+      if (!p.connected) io.to(code).emit('player_timeout', { playerNum:disconnectedNum, name:p.name });
+      p.disconnectTimer = null;
     }, DISCONNECT_MS);
   });
 });

@@ -7,6 +7,33 @@ const G = {
   viewingOwn: false, myViewUsed: false,
 };
 const TRICK_DISPLAY_MS = 5000;
+const SESSION_KEY = 'rang_player_session_v1';
+
+function loadSavedSession(){
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+  catch(e){ return null; }
+}
+function savePlayerSession(roomCode, playerNum, reconnectToken){
+  if(!roomCode || !playerNum || !reconnectToken) return;
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({roomCode,playerNum,reconnectToken})); } catch(e){}
+}
+function clearSavedSession(){
+  try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+}
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g, ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[ch]);
+}
+function setConnectionStatus(showing, text){
+  let el = document.getElementById('connection-status');
+  if(!el){
+    el=document.createElement('div'); el.id='connection-status'; el.className='connection-status hidden';
+    document.body.appendChild(el);
+  }
+  el.textContent=text||'Reconnecting…';
+  el.classList.toggle('hidden', !showing);
+}
 
 // ══ SOUND ENGINE (synthesized, no files) ══════════════════════════════════════
 const Snd = {
@@ -453,7 +480,8 @@ function applyState(gs){
       if(isHidden('m-13ar')){
         const callerName = (gs.thirteenCard.callerNum && gs.players[gs.thirteenCard.callerNum]?.name) || 'Opponent';
         const nr = gs.thirteenCard.newRang;
-        setTxt('tcar-info', callerName + ' declared a 13-card challenge with ' + SUIT_SYM[nr] + ' ' + SUIT_NAME[nr] + '. They must win ALL 13 tricks. You BOTH must cast the same vote.');
+        const originalRang = gs.rang ? SUIT_SYM[gs.rang] + ' ' + SUIT_NAME[gs.rang] : '—';
+        setTxt('tcar-info', 'Original Rang: ' + originalRang + '. ' + callerName + ' challenged with ' + SUIT_SYM[nr] + ' ' + SUIT_NAME[nr] + '. They must win ALL 13 tricks. You BOTH must cast the same vote.');
         show('tcar-btns'); hide('tcar-wait');
         if(G.partnerData) displayPartnerView('tcar-pv','tcar-pv-lbl','tcar-phand');
         openModal('m-13ar');
@@ -540,7 +568,9 @@ function displayPartnerView(containerId, lblId, handId){
 // ── UI updaters ───────────────────────────────────────────────────────────────
 function updateTopBar(gs){
   setTxt('tb-room', G.roomCode);
-  const selName = gs.rangSelector && gs.players[gs.rangSelector] ? gs.players[gs.rangSelector].name : '';
+  const rangOwner = gs.thirteenCard && gs.thirteenCard.active && gs.thirteenCard.pending===false
+    ? gs.thirteenCard.callerNum : gs.rangSelector;
+  const selName = rangOwner && gs.players[rangOwner] ? gs.players[rangOwner].name : '';
   setTxt('tb-rang', gs.rang ? `${SUIT_SYM[gs.rang]} ${gs.rangName} · ${selName}` : 'Rang: —');
   const tp = gs.phase==='trick_play'||gs.phase==='five_card_trick_play';
   setTxt('tb-trick', tp ? `T${gs.trickNumber}/${gs.totalTricks}` : gs.phase.replace(/_/g,' ').slice(0,14));
@@ -758,11 +788,11 @@ function updateChallengePanel(gs){
         show('btn-walkover');
         $('btn-walkover').innerHTML = '🏳 Walk Over<br><small>'+myReqLeft+' request'+(myReqLeft!==1?'s':'')+' left</small>';
       }
-      setTxt('ch-status', declines.length+'/4 declined'+(myReqUsed>0 ? '\nWalk over: '+myReqLeft+' left' : ''));
+      renderThirteenDeclineStatus(gs, declines, myReqUsed>0 ? 'Walk over: '+myReqLeft+' left' : '');
     } else {
       show('btn-no13ch');
       $('btn-no13ch').classList.add('declined');
-      setTxt('ch-status','You declined ✓\n('+declines.length+'/4)');
+      renderThirteenDeclineStatus(gs, declines, 'You voted No Challenge');
     }
   } else if(ph==='thirteen_card_challenge_pending'){
     setTxt('ch-status','⚡ 13-card challenge\npending…');
@@ -777,6 +807,20 @@ function updateChallengePanel(gs){
     const hasStatus = ($('ch-status')?.textContent||'').trim().length > 0;
     chPanel.style.display = (anyBtn || hasStatus) ? '' : 'none';
   }
+}
+
+function renderThirteenDeclineStatus(gs, declines, note){
+  const el=$('ch-status');
+  if(!el) return;
+  const voted=new Set(declines||[]);
+  let html='<div class="decline-vote-title">No Challenge votes</div>';
+  for(let n=1;n<=4;n++){
+    const name=escapeHtml((gs.players[n]&&gs.players[n].name)||('P'+n));
+    html+='<div class="decline-vote-row"><span>'+name+(n===G.myNum?' (You)':'')+'</span>'+
+      (voted.has(n)?'<b class="vote-done">✓</b>':'<b class="vote-pending">●</b>')+'</div>';
+  }
+  if(note) html+='<div class="decline-vote-note">'+note+'</div>';
+  el.innerHTML=html;
 }
 
 function updateTurnLabel(gs){
@@ -849,17 +893,41 @@ function updateActionBar(gs){
 function initSocket(){
   G.socket = io();
 
+  G.socket.on('connect', ()=>{
+    const saved=loadSavedSession();
+    if(saved && saved.roomCode && saved.playerNum && saved.reconnectToken){
+      setConnectionStatus(true, 'Restoring your game…');
+      G.socket.emit('resume_session', saved);
+    } else {
+      setConnectionStatus(false);
+    }
+  });
+  G.socket.on('disconnect', ()=>{
+    if(G._sessionReplaced) setConnectionStatus(true, 'Game resumed in another tab');
+    else if(loadSavedSession()) setConnectionStatus(true, 'Connection lost — reconnecting…');
+  });
+  G.socket.on('resume_failed', ()=>{
+    clearSavedSession(); setConnectionStatus(false);
+    toast('Saved game is no longer available. Join the room normally.', true);
+  });
+  G.socket.on('session_replaced', ()=>{
+    G._sessionReplaced=true;
+    setConnectionStatus(true, 'Game resumed in another tab');
+  });
+
   G.socket.on('error', ({message})=>toast(message,true));
 
-  G.socket.on('trial_room_created', ({roomCode,playerNum})=>{
+  G.socket.on('trial_room_created', ({roomCode,playerNum,reconnectToken})=>{
     G.roomCode=roomCode; G.myNum=playerNum;
+    savePlayerSession(roomCode,playerNum,reconnectToken);
     setTxt('trial-code', roomCode);
     hide('panel-setup'); hide('panel-seats'); show('panel-trial');
     toast('Trial room ready — you are P1 with 3 bots');
   });
 
-  G.socket.on('room_created', ({roomCode,playerNum,mode})=>{
+  G.socket.on('room_created', ({roomCode,playerNum,mode,reconnectToken})=>{
     G.roomCode=roomCode; G.myNum=playerNum;
+    savePlayerSession(roomCode,playerNum,reconnectToken);
     if(mode==='random_teams'){
       G.roomMode='random_teams';
       setTxt('rand-code',roomCode);
@@ -939,7 +1007,10 @@ function initSocket(){
   });
 
   G.socket.on('your_team_seat', ({playerNum})=>{ G.myNum=playerNum; });
-  G.socket.on('team_draw_seated', ({playerNum})=>{ G.myNum=playerNum; });
+  G.socket.on('team_draw_seated', ({playerNum,roomCode,reconnectToken})=>{
+    G.myNum=playerNum; if(roomCode) G.roomCode=roomCode;
+    savePlayerSession(G.roomCode,playerNum,reconnectToken);
+  });
 
   G.socket.on('trial_random_teams_created', ({roomCode,myTeam,myOptions,draw})=>{
     G.roomCode=roomCode; G.roomMode='random_teams';
@@ -962,8 +1033,10 @@ function initSocket(){
   });
 
 
-  G.socket.on('joined_room', ({roomCode,playerNum,reconnected})=>{
+  G.socket.on('joined_room', ({roomCode,playerNum,reconnected,reconnectToken})=>{
     G.roomCode=roomCode; G.myNum=playerNum;
+    savePlayerSession(roomCode,playerNum,reconnectToken);
+    setConnectionStatus(false);
     setTxt('disp-code',roomCode);
     hide('panel-setup'); show('panel-seats');
     if(reconnected){ toast('Reconnected!'); showGame(); }
