@@ -815,8 +815,7 @@ function renderThirteenDeclineStatus(gs, declines, note){
   const voted=new Set(declines||[]);
   let html='<div class="decline-vote-title">No Challenge votes</div>';
   for(let n=1;n<=4;n++){
-    const name=escapeHtml((gs.players[n]&&gs.players[n].name)||('P'+n));
-    html+='<div class="decline-vote-row"><span>'+name+(n===G.myNum?' (You)':'')+'</span>'+
+    html+='<div class="decline-vote-row"><span>P'+n+'</span>'+
       (voted.has(n)?'<b class="vote-done">✓</b>':'<b class="vote-pending">●</b>')+'</div>';
   }
   if(note) html+='<div class="decline-vote-note">'+note+'</div>';
