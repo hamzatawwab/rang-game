@@ -1816,34 +1816,4 @@ body::after{
   .decline-vote-title{ font-size:8px; line-height:1.2; }
   .decline-vote-row{ gap:4px; padding:2px 3px; font-size:9px; }
 
-  .top-bar{
-    display:grid !important;
-    grid-template-columns:auto minmax(60px,110px) auto auto 28px 28px;
-    gap:3px !important;
-    width:100%; box-sizing:border-box;
-    padding:5px 4px !important;
-    justify-content:start;
-  }
-  .top-bar .tb-pill{ min-width:0 !important; font-size:9px !important; }
-  #tb-room{ max-width:62px !important; overflow:hidden; text-overflow:ellipsis; }
-  #tb-rang.tb-pill{
-    width:auto !important; min-width:0 !important;
-    padding:3px 5px !important; overflow:hidden; text-overflow:ellipsis;
-  }
-  #tb-trick, #tb-series{ font-size:8px !important; }
-  #btn-mute, #btn-reset, .tb-mute, .tb-reset{
-    width:28px !important; min-width:28px !important; height:27px;
-    padding:0 !important; margin:0 !important; overflow:hidden;
-  }
-  #btn-reset{ font-size:0 !important; }
-  #btn-reset::after{ content:'↻'; font-size:15px; }
-}
-
-@media (max-width:380px){
-  .top-bar{ grid-template-columns:auto minmax(52px,90px) auto auto 26px 26px; gap:2px !important; }
-  #tb-room{ max-width:55px !important; }
-  #tb-trick, #tb-series{ font-size:8px !important; }
-  #btn-mute, #btn-reset, .tb-mute, .tb-reset{
-    width:26px !important; min-width:26px !important;
-  }
 }
