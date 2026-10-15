@@ -1534,17 +1534,22 @@ function bindEvents(){
 
   // ── Trial / Overview (bots) ──
   $('btn-trial').addEventListener('click',()=>{
-    const name=$('inp-name').value.trim() || 'You';
-    const code = prompt('Enter developer trial code:');
-    if(code===null) return;
-    G.myName=name;
-    const rt = confirm('OK = Random Teams trial (ace draw)\nCancel = Select Seat trial (you are P1)');
-    if(rt){
-      G.socket.emit('create_trial_random_teams',{ name, trialCode: code.trim() });
-    } else {
-      G.socket.emit('create_trial_room',{ name, trialCode: code.trim() });
-    }
+    G.myName=$('inp-name').value.trim() || 'You';
+    $('inp-trial-code').value='';
+    openModal('m-trial-setup');
+    setTimeout(()=>$('inp-trial-code').focus(), 50);
   });
+  function startTrial(mode){
+    const trialCode=$('inp-trial-code').value.trim();
+    if(!trialCode) return toast('Enter the developer trial code',true);
+    closeModal('m-trial-setup');
+    if(mode==='random') G.socket.emit('create_trial_random_teams',{ name:G.myName, trialCode });
+    else G.socket.emit('create_trial_room',{ name:G.myName, trialCode });
+  }
+  $('btn-trial-seat-mode').addEventListener('click',()=>startTrial('seat'));
+  $('btn-trial-random-mode').addEventListener('click',()=>startTrial('random'));
+  $('btn-trial-setup-cancel').addEventListener('click',()=>closeModal('m-trial-setup'));
+  $('inp-trial-code').addEventListener('keydown',e=>{ if(e.key==='Enter') startTrial('seat'); });
   $('btn-start-trial').addEventListener('click',()=>{ G.socket.emit('start_with_bots', { password: (G._startPw||undefined) }); G._startPw=undefined; });
   $('btn-trial-back').addEventListener('click',()=>{ hide('panel-trial'); show('panel-setup'); });
   $('btn-trial-copy').addEventListener('click',()=>{

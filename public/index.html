@@ -414,6 +414,20 @@
   </div>
 </div>
 
+<!-- Trial setup (uses an in-game modal so it works on iOS and embedded browsers) -->
+<div id="m-trial-setup" class="modal hidden">
+  <div class="mbox">
+    <h2>🤖 Overview / Trial</h2>
+    <p>Enter the developer trial code, then choose how teams should be arranged.</p>
+    <input id="inp-trial-code" type="password" placeholder="Developer trial code" autocomplete="off">
+    <div class="mactions">
+      <button id="btn-trial-seat-mode" class="btn btn-primary btn-full">🪑 Select Seat Trial<br><small>You start as P1</small></button>
+      <button id="btn-trial-random-mode" class="btn btn-secondary btn-full">🎴 Random Teams Trial<br><small>Ace draw decides partners</small></button>
+      <button id="btn-trial-setup-cancel" class="btn btn-ghost btn-full">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Reset code modal -->
 <div id="m-reset" class="modal hidden">
   <div class="mbox">
